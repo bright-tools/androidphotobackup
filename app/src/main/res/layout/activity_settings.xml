@@ -32,6 +32,30 @@
                 android:layout_height="fill_parent">
 
                 <LinearLayout
+                    android:id="@+id/tab3"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Run Backup Now"
+                        android:id="@+id/buttonRunNow"
+                        android:layout_gravity="center_horizontal"
+                        android:onClick="onRunNowClick" />
+
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:inputType="textMultiLine"
+                        android:ems="10"
+                        android:id="@+id/logView"
+                        android:layout_gravity="center_horizontal"
+                        android:editable="false" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/tab2"
                     android:layout_width="match_parent"
                     android:layout_height="450dp"
@@ -74,12 +98,6 @@
                         android:id="@+id/buttonSelectFolder"
                         android:layout_gravity="center_horizontal" />
                 </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/tab3"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    android:orientation="vertical"></LinearLayout>
 
             </FrameLayout>
 
