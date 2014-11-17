@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.CheckBox;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
@@ -20,12 +21,30 @@ import android.database.Cursor;
 import android.content.ContentResolver;
 import android.net.Uri;
 
-public class SettingsActivity extends Activity {
+import android.util.Log;
+
+import android.content.Intent;
+import android.content.IntentSender.SendIntentException;
+import android.content.DialogInterface;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.drive.Drive;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.*;
+import com.google.android.gms.drive.*;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import android.app.Dialog;
+import android.support.v4.app.*;
+
+
+public class SettingsActivity extends FragmentActivity  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener  {
 
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
 
     private EditText passwordBox;
     private CheckBox showPass;
+    private TextView driveStatus;
     private EditText logView;
 
     private void setupTabs( )
@@ -45,9 +64,14 @@ public class SettingsActivity extends Activity {
         spec3.setIndicator("Timing");
         spec3.setContent(R.id.tab3);
 
+        TabSpec spec4=tabHost.newTabSpec("About");
+        spec4.setIndicator("About");
+        spec4.setContent(R.id.tab4);
+
         tabHost.addTab(spec1);
         tabHost.addTab(spec2);
         tabHost.addTab(spec3);
+        tabHost.addTab(spec4);
     }
 
     private void loadSettings()
@@ -68,6 +92,7 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_settings);
 
         setupTabs();
@@ -75,6 +100,7 @@ public class SettingsActivity extends Activity {
         passwordBox = (EditText)findViewById(R.id.editPassword);
         showPass = (CheckBox)findViewById(R.id.checkShowPass);
         logView = (EditText)findViewById(R.id.logView);
+        driveStatus = (TextView)findViewById(R.id.textDriveStatus);
 
         showPass.setOnCheckedChangeListener(new OnCheckedChangeListener(){
             @Override
@@ -87,13 +113,25 @@ public class SettingsActivity extends Activity {
                 }
             }});
 
+        Log.d( "XX", "XX" + GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) );
+
         loadSettings();
+        setupApis();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!mResolvingError) {
+            apiClient.connect();
+        }
     }
 
     @Override
     protected void onStop() {
-        super.onStop();
         saveSettings();
+        apiClient.disconnect();
+        super.onStop();
     }
 
     @Override
@@ -125,19 +163,130 @@ public class SettingsActivity extends Activity {
             Uri src;
             if( i == 0 ) {
                 src = MediaStore.Images.Media.INTERNAL_CONTENT_URI;
-                logView.append("Examining internal media storage");
-            }else {
+                logView.append("Examining internal media storage\n");
+            } else {
                 src = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                logView.append("Examining external media storage");
+                logView.append("Examining external media storage\n");
             }
             Cursor cursor = contentResolver.query(src, null, null, null, null);
-            int column_index = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+            int displayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+            int dateModColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED);
             if( cursor.moveToFirst() ) {
-
-                logView.append(cursor.getString(column_index));
+                do {
+                    logView.append("Found media: " + cursor.getString(displayNameColIdx) + ", modified "+cursor.getString(dateModColIdx)+"\n");
+                } while( cursor.moveToNext() );
             }else{
-                logView.append("Didn't find any media");
+                logView.append("Didn't find any media\n");
             }
         }
     }
+
+
+
+
+    private GoogleApiClient apiClient;
+    private boolean mResolvingError = false;
+    // Request code to use when launching the resolution activity
+    private static final int REQUEST_RESOLVE_ERROR = 1001;
+    // Unique tag for the error dialog fragment
+    private static final String DIALOG_ERROR = "dialog_error";
+
+    public void setupApis()
+    {
+        apiClient = new GoogleApiClient.Builder(this)
+                .addApi(Drive.API)
+                .addScope(Drive.SCOPE_FILE)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+    }
+
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        // Connected to Google Play services!
+        // The good stuff goes here.
+        driveStatus.setText("Connected");
+    }
+
+    @Override
+    public void onConnectionSuspended(int cause) {
+        // The connection has been interrupted.
+        // Disable any UI components that depend on Google APIs
+        // until onConnected() is called.
+        driveStatus.setText("Suspended");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        Log.d( "XX", "YY" + result );
+        if (mResolvingError) {
+            // Already attempting to resolve an error.
+            return;
+        } else if (result.hasResolution()) {
+            try {
+                mResolvingError = true;
+                result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
+            } catch (SendIntentException e) {
+                // There was an error with the resolution intent. Try again.
+                apiClient.connect();
+            }
+        } else {
+            // Show dialog using GooglePlayServicesUtil.getErrorDialog()
+            showErrorDialog(result.getErrorCode());
+            mResolvingError = true;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_RESOLVE_ERROR) {
+            mResolvingError = false;
+            if (resultCode == RESULT_OK) {
+                // Make sure the app is not already connected or attempting to connect
+                if (!apiClient.isConnecting() &&
+                        !apiClient.isConnected()) {
+                    apiClient.connect();
+                }
+            }
+        }
+    }
+
+    // The rest of this code is all about building the error dialog
+
+    /* Creates a dialog for an error message */
+    private void showErrorDialog(int errorCode) {
+        // Create a fragment for the error dialog
+        ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
+        // Pass the error that should be displayed
+        Bundle args = new Bundle();
+        args.putInt(DIALOG_ERROR, errorCode);
+        dialogFragment.setArguments(args);
+        dialogFragment.show(getSupportFragmentManager(), "errordialog");
+    }
+
+    /* Called from ErrorDialogFragment when the dialog is dismissed. */
+    public void onDialogDismissed() {
+        mResolvingError = false;
+    }
+
+
+
+    /* A fragment to display an error dialog */
+    public static class ErrorDialogFragment extends DialogFragment {
+        public ErrorDialogFragment() { }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Get the error code and retrieve the appropriate dialog
+            int errorCode = this.getArguments().getInt(DIALOG_ERROR);
+            return GooglePlayServicesUtil.getErrorDialog(errorCode,
+                    this.getActivity(), REQUEST_RESOLVE_ERROR);
+        }
+
+        @Override
+        public void onDismiss(DialogInterface dialog) {
+            ((SettingsActivity)getActivity()).onDialogDismissed();
+        }
+    }
+
 }
