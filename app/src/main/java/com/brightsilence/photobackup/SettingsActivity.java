@@ -41,6 +41,8 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.IntentSender.SendIntentException;
 import android.widget.Toast;
+import com.google.android.gms.drive.DriveResource.MetadataResult;
+import com.google.android.gms.drive.Metadata;
 
 public class SettingsActivity extends FragmentActivity  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener  {
 
@@ -50,10 +52,12 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
     public static final String DEFAULT_DRIVE_FOLDER = "(none)";
 
+    private String   driveFolderId;
+
     private EditText passwordBox;
     private CheckBox showPass;
     private TextView driveStatus;
-    private TextView driveFolder;
+    private TextView driveFolderText;
     private EditText logView;
 
     private void setupTabs( )
@@ -87,7 +91,8 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
     {
         SharedPreferences sharedPref = getSharedPreferences(PREFERENCES_FILE_KEY, Context.MODE_PRIVATE);
         passwordBox.setText( sharedPref.getString("encryptionPassword","") );
-        driveFolder.setText( sharedPref.getString("driveFolder",DEFAULT_DRIVE_FOLDER) );
+        driveFolderText.setText( sharedPref.getString("driveFolder",DEFAULT_DRIVE_FOLDER) );
+        driveFolderId = sharedPref.getString("driveFolderId","");
     }
 
     private void saveSettings()
@@ -96,7 +101,8 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         SharedPreferences.Editor editor = sharedPref.edit();
         // TODO: if the password changes, need to re-upload all files using the new password?
         editor.putString("encryptionPassword", passwordBox.getText().toString());
-        editor.putString("driveFolder", driveFolder.getText().toString());
+        editor.putString("driveFolder", driveFolderText.getText().toString());
+        editor.putString("driveFolderId", driveFolderId);
         editor.commit();
     }
 
@@ -112,7 +118,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         showPass = (CheckBox)findViewById(R.id.checkShowPass);
         logView = (EditText)findViewById(R.id.logView);
         driveStatus = (TextView)findViewById(R.id.textDriveStatus);
-        driveFolder = (TextView)findViewById(R.id.textCurrentDriveFolder);
+        driveFolderText = (TextView)findViewById(R.id.textCurrentDriveFolder);
 
         showPass.setOnCheckedChangeListener(new OnCheckedChangeListener(){
             @Override
@@ -172,14 +178,12 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
     public void onChooseDriveFolderClick(View v) {
 
-        String driveFolderStr = driveFolder.getText().toString();
-
         OpenFileActivityBuilder openFileBuilder = Drive.DriveApi
                 .newOpenFileActivityBuilder()
                 .setMimeType(new String[] { DriveFolder.MIME_TYPE });
 
-        if( !driveFolderStr.equals( DEFAULT_DRIVE_FOLDER )) {
-            openFileBuilder.setActivityStartFolder( DriveId.decodeFromString( driveFolderStr ));
+        if( !driveFolderId.isEmpty() ) {
+            openFileBuilder.setActivityStartFolder( DriveId.decodeFromString( driveFolderId ));
         }
 
         IntentSender intentSender = openFileBuilder.build(apiClient);
@@ -296,8 +300,12 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
                 if (resultCode == RESULT_OK) {
                     DriveId driveId = (DriveId) data.getParcelableExtra(
                             OpenFileActivityBuilder.EXTRA_RESPONSE_DRIVE_ID);
-                    driveFolder.setText( driveId.toString() );
-                    showMessage("Selected folder's ID: " + driveId);
+
+                    driveFolderId = driveId.encodeToString();
+
+                    DriveFolder driveFolder = Drive.DriveApi.getFolder(apiClient,driveId);
+
+                    driveFolder.getMetadata( apiClient ).setResultCallback(metadataCallback);
                 }
                 break;
             default:
@@ -305,6 +313,19 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
                 break;
         }
     }
+
+    final private ResultCallback<MetadataResult> metadataCallback = new
+            ResultCallback<MetadataResult>() {
+                @Override
+                public void onResult(MetadataResult result) {
+                    if (!result.getStatus().isSuccess()) {
+                        showMessage("Problem while trying to fetch metadata");
+                        return;
+                    }
+                    Metadata metadata = result.getMetadata();
+                    driveFolderText.setText( metadata.getTitle() );
+                }
+            };
 
     // The rest of this code is all about building the error dialog
 
