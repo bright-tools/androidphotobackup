@@ -37,14 +37,23 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import android.app.Dialog;
 import android.support.v4.app.*;
 
+import android.content.Intent;
+import android.content.IntentSender;
+import android.content.IntentSender.SendIntentException;
+import android.widget.Toast;
 
 public class SettingsActivity extends FragmentActivity  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener  {
 
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
 
+    public static final String TAG = "PhotoBackup::SettingsActivity";
+
+    public static final String DEFAULT_DRIVE_FOLDER = "(none)";
+
     private EditText passwordBox;
     private CheckBox showPass;
     private TextView driveStatus;
+    private TextView driveFolder;
     private EditText logView;
 
     private void setupTabs( )
@@ -78,14 +87,16 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
     {
         SharedPreferences sharedPref = getSharedPreferences(PREFERENCES_FILE_KEY, Context.MODE_PRIVATE);
         passwordBox.setText( sharedPref.getString("encryptionPassword","") );
+        driveFolder.setText( sharedPref.getString("driveFolder",DEFAULT_DRIVE_FOLDER) );
     }
 
     private void saveSettings()
     {
         SharedPreferences sharedPref = getSharedPreferences(PREFERENCES_FILE_KEY, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString("encryptionPassword", passwordBox.getText().toString());
         // TODO: if the password changes, need to re-upload all files using the new password?
+        editor.putString("encryptionPassword", passwordBox.getText().toString());
+        editor.putString("driveFolder", driveFolder.getText().toString());
         editor.commit();
     }
 
@@ -101,6 +112,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         showPass = (CheckBox)findViewById(R.id.checkShowPass);
         logView = (EditText)findViewById(R.id.logView);
         driveStatus = (TextView)findViewById(R.id.textDriveStatus);
+        driveFolder = (TextView)findViewById(R.id.textCurrentDriveFolder);
 
         showPass.setOnCheckedChangeListener(new OnCheckedChangeListener(){
             @Override
@@ -113,7 +125,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
                 }
             }});
 
-        Log.d( "XX", "XX" + GooglePlayServicesUtil.isGooglePlayServicesAvailable(this) );
+        Log.d(TAG, "XX" + GooglePlayServicesUtil.isGooglePlayServicesAvailable(this));
 
         loadSettings();
         setupApis();
@@ -156,6 +168,29 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         return super.onOptionsItemSelected(item);
     }
 
+    // TODO: Make activity tab bar scrollable?
+
+    public void onChooseDriveFolderClick(View v) {
+
+        String driveFolderStr = driveFolder.getText().toString();
+
+        OpenFileActivityBuilder openFileBuilder = Drive.DriveApi
+                .newOpenFileActivityBuilder()
+                .setMimeType(new String[] { DriveFolder.MIME_TYPE });
+
+        if( !driveFolderStr.equals( DEFAULT_DRIVE_FOLDER )) {
+            openFileBuilder.setActivityStartFolder( DriveId.decodeFromString( driveFolderStr ));
+        }
+
+        IntentSender intentSender = openFileBuilder.build(apiClient);
+        try {
+            startIntentSenderForResult(
+                    intentSender, REQUEST_CODE_OPENER, null, 0, 0, 0);
+        } catch (SendIntentException e) {
+            Log.w(TAG, "Unable to send intent", e);
+        }
+    }
+
     public void onRunNowClick(View v) {
         // TODO: Move this out so that it's no running in the on..Click callback
         ContentResolver contentResolver = getContentResolver();
@@ -181,13 +216,19 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         }
     }
 
-
+    /**
+     * Shows a toast message.
+     */
+    public void showMessage(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
 
 
     private GoogleApiClient apiClient;
     private boolean mResolvingError = false;
     // Request code to use when launching the resolution activity
     private static final int REQUEST_RESOLVE_ERROR = 1001;
+    private static final int REQUEST_CODE_OPENER = 1002;
     // Unique tag for the error dialog fragment
     private static final String DIALOG_ERROR = "dialog_error";
 
@@ -239,15 +280,29 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_RESOLVE_ERROR) {
-            mResolvingError = false;
-            if (resultCode == RESULT_OK) {
-                // Make sure the app is not already connected or attempting to connect
-                if (!apiClient.isConnecting() &&
-                        !apiClient.isConnected()) {
-                    apiClient.connect();
+        switch(requestCode) {
+
+            case REQUEST_RESOLVE_ERROR:
+                mResolvingError = false;
+                if (resultCode == RESULT_OK) {
+                    // Make sure the app is not already connected or attempting to connect
+                    if (!apiClient.isConnecting() &&
+                            !apiClient.isConnected()) {
+                        apiClient.connect();
+                    }
                 }
-            }
+                break;
+            case REQUEST_CODE_OPENER:
+                if (resultCode == RESULT_OK) {
+                    DriveId driveId = (DriveId) data.getParcelableExtra(
+                            OpenFileActivityBuilder.EXTRA_RESPONSE_DRIVE_ID);
+                    driveFolder.setText( driveId.toString() );
+                    showMessage("Selected folder's ID: " + driveId);
+                }
+                break;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+                break;
         }
     }
 

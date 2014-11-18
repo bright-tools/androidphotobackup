@@ -57,12 +57,27 @@
                             android:layout_column="14" />
                     </TableRow>
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:text="Current Folder: "
+                        android:id="@+id/textView5" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        android:text="(none)"
+                        android:id="@+id/textCurrentDriveFolder" />
+
                     <Button
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Select Folder"
                         android:id="@+id/buttonSelectFolder"
-                        android:layout_gravity="center_horizontal" />
+                        android:layout_gravity="center_horizontal"
+                        android:onClick="onChooseDriveFolderClick" />
                 </TableLayout>
 
                 <LinearLayout
