@@ -21,6 +21,9 @@ import android.database.Cursor;
 import android.content.ContentResolver;
 import android.net.Uri;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import android.util.Log;
 
 import android.content.Intent;
@@ -32,10 +35,12 @@ import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.*;
+import com.google.android.gms.drive.DriveFolder.DriveFolderResult;
 import com.google.android.gms.drive.*;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import android.app.Dialog;
 import android.support.v4.app.*;
+import com.google.android.gms.drive.query.*;
 
 import android.content.Intent;
 import android.content.IntentSender;
@@ -196,28 +201,9 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
     }
 
     public void onRunNowClick(View v) {
-        // TODO: Move this out so that it's no running in the on..Click callback
-        ContentResolver contentResolver = getContentResolver();
-        for( int i = 0; i < 2 ; i++ ) {
-            Uri src;
-            if( i == 0 ) {
-                src = MediaStore.Images.Media.INTERNAL_CONTENT_URI;
-                logView.append("Examining internal media storage\n");
-            } else {
-                src = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                logView.append("Examining external media storage\n");
-            }
-            Cursor cursor = contentResolver.query(src, null, null, null, null);
-            int displayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
-            int dateModColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED);
-            if( cursor.moveToFirst() ) {
-                do {
-                    logView.append("Found media: " + cursor.getString(displayNameColIdx) + ", modified "+cursor.getString(dateModColIdx)+"\n");
-                } while( cursor.moveToNext() );
-            }else{
-                logView.append("Didn't find any media\n");
-            }
-        }
+        Intent intent = new Intent(this, PhotoBackupService.class);
+        intent.putExtra("driveFolderId",driveFolderId);
+        startService(intent);
     }
 
     /**
@@ -248,8 +234,6 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        // Connected to Google Play services!
-        // The good stuff goes here.
         driveStatus.setText("Connected");
     }
 
@@ -263,7 +247,6 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
-        Log.d( "XX", "YY" + result );
         if (mResolvingError) {
             // Already attempting to resolve an error.
             return;
