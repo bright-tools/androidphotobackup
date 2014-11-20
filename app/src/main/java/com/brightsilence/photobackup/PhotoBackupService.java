@@ -80,7 +80,7 @@ public class PhotoBackupService extends IntentService {
                     final int bucketDisplayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
                     final int dateModColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED);
 
-                    HashMap dirsExisting = new HashMap<String, DriveFolder>();
+                    HashMap<String, DriveFolder> dirsExisting = new HashMap<String, DriveFolder>();
 
                     do {
                         String bucketName = cursor.getString(bucketDisplayNameColIdx);
@@ -112,8 +112,8 @@ public class PhotoBackupService extends IntentService {
 
                         Log.d(TAG, "Found media: " + mediaFileName + "(" + bucketName + "), modified " + mediaModified + "\n");
                         if (dirsExisting.containsKey(bucketName)) {
-                            DriveFolder containingFolder = (DriveFolder)(dirsExisting.get( bucketName ));
-                            if( !checkForDriveFile( targetMediaFileName, containingFolder, Long.valueOf( mediaModified ).longValue() )) {
+                            DriveFolder containingFolder = dirsExisting.get( bucketName );
+                            if( !checkForDriveFile( targetMediaFileName, containingFolder, Long.valueOf( mediaModified ) )) {
                                 Log.d(TAG, "File not found on Drive");
                                 MetadataChangeSet changeSet = new MetadataChangeSet.Builder()
                                         .setTitle(targetMediaFileName)
@@ -135,10 +135,10 @@ public class PhotoBackupService extends IntentService {
                         }
                     } while (cursor.moveToNext());
 
-                    cursor.close();
                 } else {
                     Log.d(TAG, "Didn't find any media\n");
                 }
+                cursor.close();
             }
         } else {
             Log.d(TAG, "Failed to connect to Drive\n");
@@ -170,6 +170,7 @@ public class PhotoBackupService extends IntentService {
                     Log.d(TAG,"File exists but time does not match");
                 }
             }
+            result.getMetadataBuffer().close();
         }
 
         return retVal;
