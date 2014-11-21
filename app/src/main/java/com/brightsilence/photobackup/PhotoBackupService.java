@@ -22,8 +22,17 @@ import com.google.android.gms.drive.query.Filters;
 import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
 
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.io.ZipOutputStream;
+import net.lingala.zip4j.util.Zip4jConstants;
+
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Date;
+import java.io.File;
+import java.io.FileInputStream;
 
 public class PhotoBackupService extends IntentService {
 
@@ -107,8 +116,8 @@ public class PhotoBackupService extends IntentService {
                         }
 
                         String mediaFileName = cursor.getString(displayNameColIdx);
-                        String targetMediaFileName = mediaFileName+".zip";
                         String mediaModified = cursor.getString(dateModColIdx);
+                        String targetMediaFileName = mediaFileName+"."+mediaModified+".zip";
 
                         Log.d(TAG, "Found media: " + mediaFileName + "(" + bucketName + "), modified " + mediaModified + "\n");
                         if (dirsExisting.containsKey(bucketName)) {
@@ -121,10 +130,47 @@ public class PhotoBackupService extends IntentService {
                                 ContentsResult result = Drive.DriveApi.newContents(apiClient).await();
                                 if( result.getStatus().isSuccess() )
                                 {
-//                                    OutputStream outputStream = result.getContents().getOutputStream();
-                                    DriveFileResult fileResult = containingFolder.createFile(apiClient, changeSet, result.getContents() ).await();
+                                    OutputStream outputStream = result.getContents().getOutputStream();
 
-                                    // TODO: Do backup
+                                    ZipParameters parameters = new ZipParameters();
+                                    parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+                                    parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+                                    parameters.setEncryptFiles(true);
+                                    parameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+                                    parameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+                                    parameters.setPassword("test123!");
+//                                    parameters.setSourceExternalStream(true);
+//                                    parameters.setFileNameInZip(mediaFileName);
+
+                                    ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+                                    try {
+                                        String fileSrc = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                                        Log.d(TAG,"Data: "+fileSrc);
+                                        zipOutputStream.putNextEntry(new File(fileSrc),parameters);
+
+                                        FileInputStream inputStream = new FileInputStream(fileSrc);
+                                        byte[] readBuff = new byte[4096];
+                                        int readLen = -1;
+
+                                        //Read the file content and write it to the OutputStream
+                                        while ((readLen = inputStream.read(readBuff)) != -1) {
+                                            zipOutputStream.write(readBuff, 0, readLen);
+                                        }
+
+                                        inputStream.close();
+
+                                        zipOutputStream.closeEntry();
+                                        zipOutputStream.finish();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                    try {
+                                        zipOutputStream.close();
+                                        outputStream.close();
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                    DriveFileResult fileResult = containingFolder.createFile(apiClient, changeSet, result.getContents() ).await();
                                 }
                                 else {
                                     Log.d(TAG,"Failed to create new contents");
@@ -150,8 +196,10 @@ public class PhotoBackupService extends IntentService {
 
         Query query = new Query.Builder()
                 .addFilter(Filters.eq(SearchableField.TITLE, fileName ))
+                .addFilter(Filters.eq(SearchableField.TRASHED, false))
                 .addFilter(Filters.eq(SearchableField.MIME_TYPE,"application/zip"))
                 .build();
+        // TODO: Need to add "TRASHED" filter for folders?
         // Invoke the query synchronously
         DriveApi.MetadataBufferResult result =
                 folderId.queryChildren(apiClient, query).await();
@@ -159,16 +207,17 @@ public class PhotoBackupService extends IntentService {
         if( result.getStatus().isSuccess() ) {
             Log.d(TAG,"checkForDriveFile returned "+result.getMetadataBuffer().getCount());
             if( result.getMetadataBuffer().getCount() > 0 ) {
-                Metadata md = result.getMetadataBuffer().get(0);
-                Date modDate = md.getModifiedDate();
+                Log.d(TAG,"File exists");
+//                Metadata md = result.getMetadataBuffer().get(0);
+//                Date modDate = md.getModifiedDate();
                 // getTime returns milliseconds - modificationTime is in seconds
-                long modTime = modDate.getTime() / 1000;
-                if( modTime == modificationTime ){
-                    retVal = true;
-                    Log.d(TAG,"File exists & time matches");
-                } else {
-                    Log.d(TAG,"File exists but time does not match");
-                }
+//                long modTime = modDate.getTime() / 1000;
+//                if( modTime == modificationTime ){
+//                    retVal = true;
+//                    Log.d(TAG,"Time matches");
+//                } else {
+//                    Log.d(TAG,"Time does not match");
+//                }
             }
             result.getMetadataBuffer().close();
         }
@@ -192,6 +241,7 @@ public class PhotoBackupService extends IntentService {
             if( result.getMetadataBuffer().getCount() > 0 ) {
                 retVal = Drive.DriveApi.getFolder(apiClient, result.getMetadataBuffer().get(0).getDriveId());
             }
+            result.getMetadataBuffer().close();
         }
 
         return retVal;
