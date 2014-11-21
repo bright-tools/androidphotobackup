@@ -101,6 +101,13 @@
                         android:id="@+id/textView3"
                         android:layout_gravity="center_horizontal" />
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Uses zip4j, http://www.lingala.net/zip4j/\n(c) Srikanth Reddy Lingala"
+                        android:id="@+id/textZip4j"
+                        android:layout_gravity="center_horizontal" />
+
                     <EditText
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
