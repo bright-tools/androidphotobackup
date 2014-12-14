@@ -29,6 +29,20 @@ it is lost or stolen.
 TODO List
 ---------
 
+Check whether filename & date match
+Create ZIP & upload for non-matched files
+Ensure password saved when changed
+
+
 Choice of cloud storage services
 Choice of encryption methods
 Choose/customise list of directories to be backed up
+Add option to allow files no longer present on the 'phone to be deleted
+Make tabs scrollable - see http://developer.android.com/training/implementing-navigation/lateral.html
+Tidy up UI - remove menu?
+Add restore function?
+Option to unconditionally replace files
+Add timed backups
+Add inhibit for when not on Wifi
+Add notification when backup completes
+Hookup back-up log within UI

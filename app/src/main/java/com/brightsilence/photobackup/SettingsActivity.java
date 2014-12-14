@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.CheckBox;
@@ -34,13 +35,9 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.CompoundButton;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.provider.MediaStore;
-import android.database.Cursor;
-import android.content.ContentResolver;
-import android.net.Uri;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.io.IOException;
+import java.util.Arrays;
 
 import android.util.Log;
 
@@ -66,22 +63,41 @@ import android.content.IntentSender.SendIntentException;
 import android.widget.Toast;
 import com.google.android.gms.drive.DriveResource.MetadataResult;
 import com.google.android.gms.drive.Metadata;
+import com.google.api.client.extensions.android.http.AndroidHttp;
+import com.google.api.client.googleapis.extensions.android.gms.auth.UserRecoverableAuthIOException;
+import com.google.api.client.json.gson.GsonFactory;
+import android.accounts.AccountManager;
 
 public class SettingsActivity extends FragmentActivity  implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener  {
 
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
-
     public static final String TAG = "PhotoBackup::SettingsActivity";
-
     public static final String DEFAULT_DRIVE_FOLDER = "(none)";
+    public static final String DEFAULT_DRIVE_ACCOUNT = "(none)";
+
+    // Request code to use when launching the resolution activity
+    private static final int REQUEST_RESOLVE_ERROR = 1001;
+    private static final int REQUEST_CODE_OPENER = 1002;
+    private static final int COMPLETE_AUTHORIZATION_REQUEST_CODE = 1003;
+    private static final int REQUEST_ACCOUNT_PICKER = 1004;
+    // Unique tag for the error dialog fragment
+    private static final String DIALOG_ERROR = "dialog_error";
 
     private String   driveFolderId;
+    private String   driveAccountName = null;
 
     private EditText passwordBox;
     private CheckBox showPass;
     private TextView driveStatus;
     private TextView driveFolderText;
+    private TextView driveAccountText;
     private EditText logView;
+    private Button   driveFolderSelectButton;
+
+    private boolean mResolvingError = false;
+    private GoogleApiClient apiClient = null;
+    private com.google.api.services.drive.Drive _drvSvc = null;
+    com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential crd = null;
 
     private void setupTabs( )
     {
@@ -110,12 +126,22 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         tabHost.addTab(spec4);
     }
 
+    private void setDriveAccountName( String pNewName )
+    {
+        driveAccountName = pNewName;
+        driveAccountText.setText( driveAccountName );
+        if( ! driveAccountName.equals(DEFAULT_DRIVE_ACCOUNT) ) {
+            setupApis(true);
+        }
+    }
+
     private void loadSettings()
     {
         SharedPreferences sharedPref = getSharedPreferences(PREFERENCES_FILE_KEY, Context.MODE_PRIVATE);
-        passwordBox.setText( sharedPref.getString("encryptionPassword","") );
-        driveFolderText.setText( sharedPref.getString("driveFolder",DEFAULT_DRIVE_FOLDER) );
+        passwordBox.setText(sharedPref.getString("encryptionPassword", ""));
+        driveFolderText.setText(sharedPref.getString("driveFolder", DEFAULT_DRIVE_FOLDER));
         driveFolderId = sharedPref.getString("driveFolderId","");
+        setDriveAccountName(sharedPref.getString("driveAccountName", DEFAULT_DRIVE_ACCOUNT));
     }
 
     private void saveSettings()
@@ -126,6 +152,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         editor.putString("encryptionPassword", passwordBox.getText().toString());
         editor.putString("driveFolder", driveFolderText.getText().toString());
         editor.putString("driveFolderId", driveFolderId);
+        editor.putString("driveAccountName", driveAccountName);
         editor.commit();
     }
 
@@ -142,6 +169,9 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         logView = (EditText)findViewById(R.id.logView);
         driveStatus = (TextView)findViewById(R.id.textDriveStatus);
         driveFolderText = (TextView)findViewById(R.id.textCurrentDriveFolder);
+        driveAccountText = (TextView)findViewById(R.id.textCurrentDriveAccount);
+        driveFolderSelectButton = (Button)findViewById(R.id.buttonSelectFolder);
+        driveFolderSelectButton.setEnabled(false);
 
         showPass.setOnCheckedChangeListener(new OnCheckedChangeListener(){
             @Override
@@ -154,7 +184,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
                 }
             }});
 
-        Log.d(TAG, "XX" + GooglePlayServicesUtil.isGooglePlayServicesAvailable(this));
+        Log.d(TAG, "Are play services available: " + GooglePlayServicesUtil.isGooglePlayServicesAvailable(this));
 
         loadSettings();
         setupApis();
@@ -163,9 +193,6 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
     @Override
     protected void onStart() {
         super.onStart();
-        if (!mResolvingError) {
-            apiClient.connect();
-        }
     }
 
     @Override
@@ -218,6 +245,10 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         }
     }
 
+    public void onChooseDriveAccountClick(View v) {
+        startActivityForResult(crd.newChooseAccountIntent(), REQUEST_ACCOUNT_PICKER);
+    }
+
     public void onRunNowClick(View v) {
         Intent intent = new Intent(this, PhotoBackupService.class);
         intent.putExtra("driveFolderId",driveFolderId);
@@ -231,27 +262,58 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
+    public void setupApis() {
+        setupApis(false);
+    }
 
-    private GoogleApiClient apiClient;
-    private boolean mResolvingError = false;
-    // Request code to use when launching the resolution activity
-    private static final int REQUEST_RESOLVE_ERROR = 1001;
-    private static final int REQUEST_CODE_OPENER = 1002;
-    // Unique tag for the error dialog fragment
-    private static final String DIALOG_ERROR = "dialog_error";
-
-    public void setupApis()
+    public void setupApis( boolean pForce )
     {
-        apiClient = new GoogleApiClient.Builder(this)
-                .addApi(Drive.API)
-                .addScope(Drive.SCOPE_FILE)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
+        if( pForce ) {
+            apiClient = null;
+            _drvSvc = null;
+        }
+        if( apiClient == null ) {
+            if( ! driveAccountName.equals( DEFAULT_DRIVE_ACCOUNT )) {
+                Log.d(TAG,"Creating new Drive API for "+driveAccountName);
+                apiClient = new GoogleApiClient.Builder(this)
+                        .addApi(Drive.API)
+                        .addScope(Drive.SCOPE_FILE)
+                        .setAccountName(driveAccountName)
+                        .addConnectionCallbacks(this)
+                        .addOnConnectionFailedListener(this)
+                        .build();
+            }
+        }
+
+        if( apiClient != null ) {
+            if( !( apiClient.isConnected() )) {
+                Log.d(TAG,"Trying to connect Drive API");
+                apiClient.connect();
+            }
+        }
+
+        if( crd == null ) {
+            Log.d(TAG,"Creating new Account Credential");
+            crd = com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
+                    .usingOAuth2(this, Arrays.asList(com.google.api.services.drive.DriveScopes.DRIVE_FILE));
+        }
+
+        if( _drvSvc == null ) {
+            if( crd != null ) {
+                if (! driveAccountName.equals(DEFAULT_DRIVE_ACCOUNT)) {
+                    Log.d(TAG,"Selecting credentials for account: "+driveAccountName);
+                    crd.setSelectedAccountName(driveAccountName);
+                    Log.d(TAG,"Creating new JSON Drive API");
+                    _drvSvc = new com.google.api.services.drive.Drive.Builder(
+                            AndroidHttp.newCompatibleTransport(), new GsonFactory(), crd).build();
+                }
+            }
+        }
     }
 
     @Override
     public void onConnected(Bundle connectionHint) {
+        driveFolderSelectButton.setEnabled(true);
         driveStatus.setText("Connected");
     }
 
@@ -260,6 +322,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         // The connection has been interrupted.
         // Disable any UI components that depend on Google APIs
         // until onConnected() is called.
+        driveFolderSelectButton.setEnabled(false);
         driveStatus.setText("Suspended");
     }
 
@@ -307,6 +370,37 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
                     DriveFolder driveFolder = Drive.DriveApi.getFolder(apiClient,driveId);
 
                     driveFolder.getMetadata( apiClient ).setResultCallback(metadataCallback);
+
+                    try {
+                        _drvSvc.files().get(driveId.getResourceId()).execute();
+                        // Try to perform a Drive API request, for instance:
+                        // File file = service.files().insert(body, mediaContent).execute();
+                    } catch (UserRecoverableAuthIOException e) {
+                        startActivityForResult(e.getIntent(), COMPLETE_AUTHORIZATION_REQUEST_CODE);
+                    } catch (IOException t )
+                    {
+                        Log.d(TAG,"XX",t.getCause());
+                    }
+                }
+                break;
+            case COMPLETE_AUTHORIZATION_REQUEST_CODE:
+                if (resultCode == Activity.RESULT_OK) {
+                    Log.d(TAG,"Auth OK");
+                    // App is authorized, you can go back to sending the API request
+                } else {
+                    Log.d(TAG,"Auth Fail");
+                    // User denied access, show him the account chooser again
+                }
+                break;
+            case REQUEST_ACCOUNT_PICKER:
+                if (resultCode == RESULT_OK && data != null && data.getExtras() != null) {
+                    String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountName != null) {
+                        if( accountName.equals( driveAccountName )) {
+                            setDriveAccountName( accountName );
+                        }
+                        Log.d(TAG, "Account Selected:" + accountName);
+                    }
                 }
                 break;
             default:
@@ -365,5 +459,4 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
             ((SettingsActivity)getActivity()).onDialogDismissed();
         }
     }
-
 }
