@@ -26,10 +26,8 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.drive.Drive;
@@ -37,7 +35,6 @@ import com.google.android.gms.drive.DriveApi;
 import com.google.android.gms.drive.DriveApi.DriveContentsResult;
 import com.google.android.gms.drive.DriveFolder;
 import com.google.android.gms.drive.DriveFolder.DriveFileResult;
-import com.google.android.gms.drive.DriveResource;
 import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.drive.DriveId;
 import com.google.android.gms.drive.MetadataChangeSet;
@@ -46,7 +43,6 @@ import com.google.android.gms.drive.query.Query;
 import com.google.android.gms.drive.query.SearchableField;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.services.drive.model.FileList;
 
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.io.ZipOutputStream;
@@ -56,6 +52,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Arrays;
+import java.util.Date;
 import java.io.File;
 import java.io.FileInputStream;
 
@@ -64,7 +61,7 @@ public class PhotoBackupService extends IntentService {
     public static final String TAG = "PhotoBackup::PhotoBackupService";
 
     private GoogleApiClient apiClient;
-    private com.google.api.services.drive.Drive _drvSvc;
+    private com.google.api.services.drive.Drive m_drvSvc;
 
     public PhotoBackupService() {
         super("PhotoBackupService");
@@ -72,7 +69,7 @@ public class PhotoBackupService extends IntentService {
         Log.d(TAG, "PhotoBackupService starting\n");
 
         apiClient = null;
-        _drvSvc = null;
+        m_drvSvc = null;
     }
 
     protected void doApiConnect()
@@ -82,18 +79,22 @@ public class PhotoBackupService extends IntentService {
 
             apiClient = new GoogleApiClient.Builder(this)
                     .addApi(Drive.API)
+                    .setAccountName("TODO")
                     .addScope(Drive.SCOPE_FILE)
                     .build();
         }
 
-        if( _drvSvc == null )
+        if( m_drvSvc == null )
         {
             Log.d(TAG, "Building (RESTful) drive API client ");
             com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential crd =
                     com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
                             .usingOAuth2(this, Arrays.asList(com.google.api.services.drive.DriveScopes.DRIVE_FILE));
-            _drvSvc = new com.google.api.services.drive.Drive.Builder(
-                    AndroidHttp.newCompatibleTransport(), new GsonFactory(), crd).build();
+            crd.setSelectedAccountName("TODO");
+            m_drvSvc = new com.google.api.services.drive.Drive.Builder(
+                    AndroidHttp.newCompatibleTransport(), new GsonFactory(), crd)
+                    .setApplicationName( SettingsActivity.APPLICATION_NAME )
+                    .build();
         }
 
         if( !apiClient.isConnected() ) {
@@ -106,8 +107,8 @@ public class PhotoBackupService extends IntentService {
     protected boolean driveFolderExists( DriveId folderId ) throws IOException
     {
         String resId =  folderId.getResourceId();
-        com.google.api.services.drive.model.File file =_drvSvc.files().get( resId ).execute();
-//        if( file.)
+        com.google.api.services.drive.model.File file = m_drvSvc.files().get( resId ).execute();
+//        if( file )
 //        String qry = "title = '"+folderName+"' and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
 //        try {
 //            final FileList gLst = _drvSvc.files().list().setQ(qry).setFields("items(id)").execute();
@@ -127,6 +128,7 @@ public class PhotoBackupService extends IntentService {
 
         if( apiClient.isConnected() ) {
             Status s = Drive.DriveApi.requestSync(apiClient).await();
+
 
             if (s.isSuccess()) {
 
@@ -280,6 +282,8 @@ public class PhotoBackupService extends IntentService {
                         }
                         cursor.close();
                     }
+                } else {
+                    Log.d(TAG,"Target directory doesn't exist\n");
                 }
             } else
             {
@@ -298,32 +302,39 @@ public class PhotoBackupService extends IntentService {
                 .addFilter(Filters.eq(SearchableField.TRASHED, false))
                 .addFilter(Filters.eq(SearchableField.MIME_TYPE,"application/zip"))
                 .build();
+
         // Invoke the query synchronously
         DriveApi.MetadataBufferResult result =
                 folderId.queryChildren(apiClient, query).await();
 
         if( result.getStatus().isSuccess() ) {
-            Log.d(TAG,"checkForDriveFile returned "+result.getMetadataBuffer().getCount());
-            if( result.getMetadataBuffer().getCount() > 0 ) {
+            int fileCount = result.getMetadataBuffer().getCount();
 
-                Log.d(TAG,"File exists");
-                Metadata md = result.getMetadataBuffer().get(0);
+            Log.d(TAG,"checkForDriveFile returned "+fileCount);
 
-                if( deleteExisting )
-                {
+            for( int fileLoop = 0;
+                 fileLoop < fileCount;
+                 fileLoop++ ) {
+
+                Log.d(TAG, "File exists ("+fileCount+")");
+                Metadata md = result.getMetadataBuffer().get(fileCount);
+
+                Log.d(TAG, "Is Trashed: " + md.isTrashed());
+                Date modDate = md.getModifiedDate();
+                // getTime returns milliseconds - modificationTime is in seconds
+                long modTime = modDate.getTime() / 1000;
+                if (modTime == modificationTime) {
+                    retVal = true;
+                    Log.d(TAG, "Time matches");
+                } else {
+                    Log.d(TAG, "Time does not match");
                 }
 
-                Log.d(TAG,"Is Trashed: "+md.isTrashed());
-//                Date modDate = md.getModifiedDate();
-                // getTime returns milliseconds - modificationTime is in seconds
-//                long modTime = modDate.getTime() / 1000;
-//                if( modTime == modificationTime ){
-                    retVal = true;
-//                    Log.d(TAG,"Time matches");
-//                } else {
-//                    Log.d(TAG,"Time does not match");
-//                }
+                if (deleteExisting) {
+                    // Oh no!  We can't!
+                }
             }
+
             result.getMetadataBuffer().close();
         }
 
