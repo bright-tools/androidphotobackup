@@ -1,4 +1,6 @@
-/*
+/**
+
+@Copyright
 
 Copyright 2014 John Bailey
 
@@ -75,11 +77,12 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
     private static final int REQUEST_CODE_OPENER = 1002;
     private static final int COMPLETE_AUTHORIZATION_REQUEST_CODE = 1003;
     private static final int REQUEST_ACCOUNT_PICKER = 1004;
+
     // Unique tag for the error dialog fragment
     private static final String DIALOG_ERROR = "dialog_error";
 
     private String   m_driveFolderId;
-    private String   driveAccountName = null;
+    private String   m_driveAccountName = null;
 
     private EditText passwordBox;
     private CheckBox showPass;
@@ -89,43 +92,44 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
     private EditText logView;
     private Button   driveFolderSelectButton;
 
-    private boolean mResolvingError = false;
+    private boolean m_resolvingError = false;
     private GoogleApiClient m_apiClient = null;
     private com.google.api.services.drive.Drive m_drvSvc = null;
     com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential m_googleActCrd = null;
+
 
     private void setupTabs( )
     {
         TabHost tabHost = (TabHost)findViewById(R.id.tabHost);
         tabHost.setup();
 
-        TabSpec spec1=tabHost.newTabSpec("Destination");
-        spec1.setContent(R.id.tab1);
-        spec1.setIndicator("Destination");
+        TabSpec destinationTabSpec=tabHost.newTabSpec("Destination");
+        destinationTabSpec.setContent(R.id.destinationTab);
+        destinationTabSpec.setIndicator("Destination");
 
-        TabSpec spec2=tabHost.newTabSpec("Security");
-        spec2.setIndicator("Security");
-        spec2.setContent(R.id.tab2);
+        TabSpec securityTabSpec=tabHost.newTabSpec("Security");
+        securityTabSpec.setIndicator("Security");
+        securityTabSpec.setContent(R.id.securityTab);
 
         TabSpec spec3=tabHost.newTabSpec("Timing");
         spec3.setIndicator("Timing");
         spec3.setContent(R.id.tab3);
 
-        TabSpec spec4=tabHost.newTabSpec("About");
-        spec4.setIndicator("About");
-        spec4.setContent(R.id.tab4);
+        TabSpec aboutTabSpec=tabHost.newTabSpec("About");
+        aboutTabSpec.setIndicator("About");
+        aboutTabSpec.setContent(R.id.aboutTab);
 
-        tabHost.addTab(spec1);
-        tabHost.addTab(spec2);
+        tabHost.addTab(destinationTabSpec);
+        tabHost.addTab(securityTabSpec);
         tabHost.addTab(spec3);
-        tabHost.addTab(spec4);
+        tabHost.addTab(aboutTabSpec);
     }
 
     private void setDriveAccountName( String pNewName )
     {
-        driveAccountName = pNewName;
-        driveAccountText.setText( driveAccountName );
-        if( ! driveAccountName.equals(DEFAULT_DRIVE_ACCOUNT) ) {
+        m_driveAccountName = pNewName;
+        driveAccountText.setText(m_driveAccountName);
+        if( ! m_driveAccountName.equals(DEFAULT_DRIVE_ACCOUNT) ) {
             setupApis(true);
         }
     }
@@ -147,7 +151,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         editor.putString("encryptionPassword", passwordBox.getText().toString());
         editor.putString("driveFolder", driveFolderText.getText().toString());
         editor.putString("m_driveFolderId", m_driveFolderId);
-        editor.putString("driveAccountName", driveAccountName);
+        editor.putString("driveAccountName", m_driveAccountName);
         editor.commit();
     }
 
@@ -247,6 +251,8 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
     }
 
     public void onRunNowClick(View v) {
+        saveSettings();
+
         Intent intent = new Intent(this, PhotoBackupService.class);
         intent.putExtra("driveFolderId", m_driveFolderId);
         startService(intent);
@@ -270,17 +276,17 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
             m_drvSvc = null;
         }
         if( m_apiClient == null ) {
-            if( ! driveAccountName.equals( DEFAULT_DRIVE_ACCOUNT )) {
+            if( ! m_driveAccountName.equals( DEFAULT_DRIVE_ACCOUNT )) {
                 // When getting:
                 //   googleplayservicesutil﹕ internal error occurred. please see logs for detailed information
                 // in the log, worth checking that they certificate's fingerprint is registered with
                 // the Developer Console
 
-                Log.d(TAG,"Creating new Drive API for "+driveAccountName);
+                Log.d(TAG,"Creating new Drive API for "+ m_driveAccountName);
                 m_apiClient = new GoogleApiClient.Builder(this)
                         .addApi(Drive.API)
                         .addScope(Drive.SCOPE_FILE)
-                        .setAccountName(driveAccountName)
+                        .setAccountName(m_driveAccountName)
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
                         .build();
@@ -302,9 +308,9 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
         if( m_drvSvc == null ) {
             if( m_googleActCrd != null ) {
-                if (! driveAccountName.equals(DEFAULT_DRIVE_ACCOUNT)) {
-                    Log.d(TAG,"Selecting credentials for account: "+driveAccountName);
-                    m_googleActCrd.setSelectedAccountName(driveAccountName);
+                if (! m_driveAccountName.equals(DEFAULT_DRIVE_ACCOUNT)) {
+                    Log.d(TAG,"Selecting credentials for account: "+ m_driveAccountName);
+                    m_googleActCrd.setSelectedAccountName(m_driveAccountName);
                     Log.d(TAG,"Creating new JSON Drive API");
                     m_drvSvc = new com.google.api.services.drive.Drive.Builder(
                             AndroidHttp.newCompatibleTransport(), new GsonFactory(), m_googleActCrd).
@@ -332,12 +338,12 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
-        if (mResolvingError) {
+        if (m_resolvingError) {
             // Already attempting to resolve an error.
             return;
         } else if (result.hasResolution()) {
             try {
-                mResolvingError = true;
+                m_resolvingError = true;
                 result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
             } catch (SendIntentException e) {
                 // There was an error with the resolution intent. Try again.
@@ -346,7 +352,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         } else {
             // Show dialog using GooglePlayServicesUtil.getErrorDialog()
             showErrorDialog(result.getErrorCode());
-            mResolvingError = true;
+            m_resolvingError = true;
         }
     }
 
@@ -355,7 +361,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
         switch(requestCode) {
 
             case REQUEST_RESOLVE_ERROR:
-                mResolvingError = false;
+                m_resolvingError = false;
                 if (resultCode == RESULT_OK) {
                     // Make sure the app is not already connected or attempting to connect
                     if (!m_apiClient.isConnecting() &&
@@ -405,7 +411,7 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
                     String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
                     if (accountName != null) {
                         // Different to the current account name?
-                        if( ! accountName.equals( driveAccountName )) {
+                        if( ! accountName.equals(m_driveAccountName)) {
                             setDriveAccountName( accountName );
                         }
                         Log.d(TAG, "Account Selected:" + accountName);
@@ -446,10 +452,8 @@ public class SettingsActivity extends FragmentActivity  implements GoogleApiClie
 
     /* Called from ErrorDialogFragment when the dialog is dismissed. */
     public void onDialogDismissed() {
-        mResolvingError = false;
+        m_resolvingError = false;
     }
-
-
 
     /* A fragment to display an error dialog */
     public static class ErrorDialogFragment extends DialogFragment {

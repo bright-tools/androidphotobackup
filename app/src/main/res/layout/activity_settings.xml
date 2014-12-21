@@ -32,7 +32,7 @@
                 android:layout_height="fill_parent">
 
                 <TableLayout
-                    android:id="@+id/tab1"
+                    android:id="@+id/destinationTab"
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
                     android:orientation="vertical">
@@ -112,7 +112,7 @@
                 </TableLayout>
 
                 <LinearLayout
-                    android:id="@+id/tab4"
+                    android:id="@+id/aboutTab"
                     android:layout_width="fill_parent"
                     android:layout_height="fill_parent"
                     android:orientation="vertical">
@@ -181,7 +181,7 @@
                 </LinearLayout>
 
                 <LinearLayout
-                    android:id="@+id/tab2"
+                    android:id="@+id/securityTab"
                     android:layout_width="match_parent"
                     android:layout_height="450dp"
                     android:orientation="vertical">
