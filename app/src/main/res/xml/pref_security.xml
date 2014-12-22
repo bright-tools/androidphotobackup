@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:key="password_text"
+        android:title="@string/pref_title_password"
+        android:defaultValue=""
+        android:selectAllOnFocus="true"
+        android:inputType="textPassword"
+        android:capitalize="none"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <CheckBoxPreference
+        android:key="show_password_checkbox"
+        android:title="@string/pref_title_show_password"
+        android:summary="@string/pref_description_show_password"
+        android:defaultValue="false" />
+
+</PreferenceScreen>

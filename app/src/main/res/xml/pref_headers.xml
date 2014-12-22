@@ -1,0 +1,21 @@
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- These settings headers are only used on tablets. -->
+
+    <header
+        android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$GeneralPreferenceFragment"
+        android:title="@string/pref_header_general" />
+
+    <header
+        android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$SecurityPreferenceFragment"
+        android:title="@string/pref_header_security" />
+
+    <header
+        android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$NotificationPreferenceFragment"
+        android:title="@string/pref_header_notifications" />
+
+    <header
+        android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$DataSyncPreferenceFragment"
+        android:title="@string/pref_header_data_sync" />
+
+</preference-headers>
