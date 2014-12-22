@@ -1,4 +1,4 @@
-package com.brightsilence.photobackup;
+package com.brightsilence.dev.androidphotobackup;
 
 import android.content.SharedPreferences;
 import android.content.Context;
@@ -15,7 +15,7 @@ public class DropBoxWrapper {
     private static final String APP_KEY = "51a8mthvm92an7j";
     private static final String APP_SECRET = "103xmi7wfz0etn0";
 
-    private static final String ACCOUNT_PREFS_NAME = SettingsActivity.PREFERENCES_FILE_KEY+"-DropBox";
+    private static final String ACCOUNT_PREFS_NAME = PhotoBackupSettingsActivity.PREFERENCES_FILE_KEY+"-DropBox";
     private static final String ACCESS_KEY_NAME = "ACCESS_KEY";
     private static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
 

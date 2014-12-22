@@ -7,6 +7,9 @@
     <string name="pref_title_show_password">Display Password</string>
     <string name="pref_description_show_password">Show password string in plain text</string>
 
+    <!-- Example Dropbox settings -->
+    <string name="pref_header_dropbox">DropBox</string>
+    <string name="pref_title_enable_dropbox">Enable Dropbox</string>
 
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
