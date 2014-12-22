@@ -1,0 +1,13 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:key="enable_dropbox_checkbox"
+        android:title="@string/pref_title_enable_dropbox"
+        android:defaultValue="false" />
+
+    <SwitchPreference
+        android:title="@string/pref_connect_to_dropbox"
+        android:dependency="enable_dropbox_checkbox"
+        android:defaultValue="false" />
+
+</PreferenceScreen>

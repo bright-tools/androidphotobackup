@@ -14,12 +14,4 @@
         android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$DropboxPreferenceFragment"
         android:title="@string/pref_header_dropbox" />
 
-    <header
-        android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$NotificationPreferenceFragment"
-        android:title="@string/pref_header_notifications" />
-
-    <header
-        android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$DataSyncPreferenceFragment"
-        android:title="@string/pref_header_data_sync" />
-
 </preference-headers>
