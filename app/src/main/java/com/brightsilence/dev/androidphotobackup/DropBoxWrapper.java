@@ -2,6 +2,7 @@ package com.brightsilence.dev.androidphotobackup;
 
 import android.content.SharedPreferences;
 import android.content.Context;
+import android.util.Log;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.session.Session.AccessType;
@@ -51,6 +52,57 @@ public class DropBoxWrapper {
         } else {
             // Still support using old OAuth 1 tokens.
             session.setAccessTokenPair(new AccessTokenPair(key, secret));
+        }
+    }
+
+    private void storeAuth(AndroidAuthSession session) {
+        // Store the OAuth 2 access token, if there is one.
+        String oauth2AccessToken = session.getOAuth2AccessToken();
+        if (oauth2AccessToken != null) {
+            SharedPreferences prefs = mContext.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString(ACCESS_KEY_NAME, "oauth2:");
+            edit.putString(ACCESS_SECRET_NAME, oauth2AccessToken);
+            edit.commit();
+            return;
+        }
+        // Store the OAuth 1 access token, if there is one.  This is only necessary if
+        // you're still using OAuth 1.
+        AccessTokenPair oauth1AccessToken = session.getAccessTokenPair();
+        if (oauth1AccessToken != null) {
+            SharedPreferences prefs = mContext.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString(ACCESS_KEY_NAME, oauth1AccessToken.key);
+            edit.putString(ACCESS_SECRET_NAME, oauth1AccessToken.secret);
+            edit.commit();
+            return;
+        }
+    }
+
+    private void clearKeys() {
+        SharedPreferences prefs = mContext.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
+        SharedPreferences.Editor edit = prefs.edit();
+        edit.clear();
+        edit.commit();
+    }
+
+    protected void onResume() {
+        AndroidAuthSession session = mDBApi.getSession();
+
+        // The next part must be inserted in the onResume() method of the
+        // activity from which session.startAuthentication() was called, so
+        // that Dropbox authentication completes properly.
+        if (session.authenticationSuccessful()) {
+            try {
+                // Mandatory call to complete the auth
+                session.finishAuthentication();
+
+                // Store it locally in our app for later use
+                storeAuth(session);
+                // TODO: Set status as good to go
+            } catch (IllegalStateException e) {
+                Log.i("TODO:TAG", "Error authenticating", e);
+            }
         }
     }
 }

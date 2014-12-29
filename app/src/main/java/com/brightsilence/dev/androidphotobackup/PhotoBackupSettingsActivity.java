@@ -39,6 +39,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
 
+    DropBoxWrapper m_dropBoxWrapper = null;
+
     /**
      * Determines whether to always show the simplified settings UI, where
      * settings are presented in a single list. When false, settings are shown
@@ -48,6 +50,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
 
     @Override
+    @TargetApi(Build.VERSION_CODES.KITKAT)
     protected boolean isValidFragment(String fragmentName) {
         return true;//GeneralPreferenceFragment.class.getName().equals(fragmentName);
     }
@@ -57,6 +60,10 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         super.onResume();
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(m_prefsListener);
+
+        if( m_dropBoxWrapper != null ) {
+            m_dropBoxWrapper.onResume();
+        }
     }
 
     @Override
@@ -296,6 +303,10 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                               String key) {
             Log.d(TAG, "onSharedPreferenceChanged : " + key);
+            if( key.equals("enable_dropbox_checkbox") )
+            {
+                m_dropBoxWrapper = new DropBoxWrapper( PhotoBackupSettingsActivity.this );
+            }
         }
     }
 }
