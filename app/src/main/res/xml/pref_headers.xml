@@ -12,6 +12,7 @@
 
     <header
         android:fragment="com.brightsilence.dev.androidphotobackup.PhotoBackupSettingsActivity$DropboxPreferenceFragment"
-        android:title="@string/pref_header_dropbox" />
+        android:title="@string/pref_header_dropbox"
+        />
 
 </preference-headers>

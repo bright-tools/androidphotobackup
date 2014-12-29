@@ -1,6 +1,8 @@
 package com.brightsilence.dev.androidphotobackup;
 
 import android.annotation.TargetApi;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -16,6 +18,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
+import android.preference.SwitchPreference;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -35,9 +38,12 @@ import java.util.List;
  */
 public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
+    public static final String TAG = "PhotoBackup::PhotoBackupSettingsActivity";
     public PhotoBackupPreferenceChanged m_prefsListener;
 
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
+
+    private static int m_dropBoxFragmentId;
 
     DropBoxWrapper m_dropBoxWrapper = null;
 
@@ -55,6 +61,36 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         return true;//GeneralPreferenceFragment.class.getName().equals(fragmentName);
     }
 
+    private SwitchPreference getConnectionToDropBoxPref()
+    {
+        SwitchPreference connectedPref = null;
+        PreferenceFragment prefFragment = (PreferenceFragment)getFragmentManager().findFragmentById(m_dropBoxFragmentId);
+
+        if( prefFragment == null ) {
+            connectedPref = (SwitchPreference)findPreference("connection_to_dropbox");
+        } else {
+            connectedPref = (SwitchPreference)prefFragment.findPreference("connection_to_dropbox");
+        }
+        if( connectedPref == null ) {
+            Log.d(TAG,"onResume()::Failed to find preference");
+        }
+
+        return connectedPref;
+    }
+
+    private void checkDisableConnectionToDropBoxPref()
+    {
+        if( m_dropBoxWrapper != null ) {
+            if (!m_dropBoxWrapper.isConnected()) {
+                SwitchPreference connectedPref = getConnectionToDropBoxPref();
+
+                if (connectedPref != null) {
+                    connectedPref.setChecked(false);
+                }
+            }
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -63,6 +99,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
         if( m_dropBoxWrapper != null ) {
             m_dropBoxWrapper.onResume();
+
+            checkDisableConnectionToDropBoxPref();
         }
     }
 
@@ -85,6 +123,14 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         super.onPostCreate(savedInstanceState);
 
         setupSimplePreferencesScreen();
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        if( sharedPreferences.getBoolean("enable_dropbox_checkbox", false ) &&
+            sharedPreferences.getBoolean("connection_to_dropbox", false ) ) {
+            createDropBoxWrapper(false);
+            checkDisableConnectionToDropBoxPref();
+        }
     }
 
     /**
@@ -289,6 +335,9 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_dropbox);
 
+            m_dropBoxFragmentId = getId();
+            Log.d(TAG, "ID IS " + getId());
+
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
@@ -303,9 +352,40 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                               String key) {
             Log.d(TAG, "onSharedPreferenceChanged : " + key);
-            if( key.equals("enable_dropbox_checkbox") )
+            if( key.equals("connection_to_dropbox") )
             {
-                m_dropBoxWrapper = new DropBoxWrapper( PhotoBackupSettingsActivity.this );
+                if( sharedPreferences.getBoolean( key, false ) )
+                {
+                    createDropBoxWrapper();
+                }
+                else
+                {
+                    if( m_dropBoxWrapper != null )
+                    {
+                        m_dropBoxWrapper.clearKeys();
+                        m_dropBoxWrapper = null;
+                    }
+                }
+            } else if( key.equals("enable_dropbox_checkbox")) {
+                if( sharedPreferences.getBoolean( key, true ))
+                {
+                    if( sharedPreferences.getBoolean("connection_to_dropbox", false)) {
+                        createDropBoxWrapper();
+                    }
+                }
+            }
+        }
+    }
+
+    private void createDropBoxWrapper( ) {
+        createDropBoxWrapper( true );
+    }
+
+    private void createDropBoxWrapper( boolean autoConnect ) {
+        m_dropBoxWrapper = new DropBoxWrapper(this);
+        if( autoConnect ) {
+            if (!m_dropBoxWrapper.isConnected()) {
+                m_dropBoxWrapper.connect();
             }
         }
     }
