@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
@@ -131,6 +132,9 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             createDropBoxWrapper(false);
             checkDisableConnectionToDropBoxPref();
         }
+
+        Intent i = new Intent(this, PhotoBackupService.class);
+        startService(i);
     }
 
     /**
@@ -360,11 +364,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                 }
                 else
                 {
-                    if( m_dropBoxWrapper != null )
-                    {
-                        m_dropBoxWrapper.clearKeys();
-                        m_dropBoxWrapper = null;
-                    }
+                    destroyDropBoxWrapper();
                 }
             } else if( key.equals("enable_dropbox_checkbox")) {
                 if( sharedPreferences.getBoolean( key, true ))
@@ -382,11 +382,22 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     }
 
     private void createDropBoxWrapper( boolean autoConnect ) {
-        m_dropBoxWrapper = new DropBoxWrapper(this);
+        if( m_dropBoxWrapper == null ) {
+            m_dropBoxWrapper = new DropBoxWrapper(this);
+        }
         if( autoConnect ) {
             if (!m_dropBoxWrapper.isConnected()) {
                 m_dropBoxWrapper.connect();
             }
+        }
+    }
+
+    private void destroyDropBoxWrapper()
+    {
+        if( m_dropBoxWrapper != null )
+        {
+            m_dropBoxWrapper.clearKeys();
+            m_dropBoxWrapper = null;
         }
     }
 }
