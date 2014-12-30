@@ -8,9 +8,13 @@ import android.content.Intent;
  */
 public class PhotoBackupServiceStarter extends BroadcastReceiver {
 
+    PhotoBackupAlarmReceiver m_alarm = new PhotoBackupAlarmReceiver();
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        Intent i = new Intent(context, PhotoBackupService.class);
-        context.startService(i);
+        if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") ||
+            intent.getAction().equals("android.intent.action.QUICKBOOT_POWERON")) {
+            m_alarm.setAlarm( context );
+        }
     }
 }

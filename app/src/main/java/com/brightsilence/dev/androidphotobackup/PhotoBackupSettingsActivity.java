@@ -1,6 +1,7 @@
 package com.brightsilence.dev.androidphotobackup;
 
 import android.annotation.TargetApi;
+import android.app.AlarmManager;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
@@ -44,6 +45,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
 
+    private static PhotoBackupAlarmReceiver m_alarm = new PhotoBackupAlarmReceiver();
     private static int m_dropBoxFragmentId;
 
     DropBoxWrapper m_dropBoxWrapper = null;
@@ -133,8 +135,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             checkDisableConnectionToDropBoxPref();
         }
 
-        Intent i = new Intent(this, PhotoBackupService.class);
-        startService(i);
+        updateAlarm();
     }
 
     /**
@@ -168,8 +169,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
         // their values. When their values change, their summaries are updated
         // to reflect the new value, per the Android Design guidelines.
-        bindPreferenceSummaryToValue(findPreference("backup_trigger_time"));
-        findPreference("backup_trigger_time").setOnPreferenceChangeListener(sBindAlarmListener);
+        bindPreferenceSummaryToLongValue(findPreference("backup_trigger_time"));
     }
 
     /**
@@ -285,13 +285,31 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                         .getString(preference.getKey(), ""));
     }
 
-    private static Preference.OnPreferenceChangeListener sBindAlarmListener = new Preference.OnPreferenceChangeListener() {
-        @Override
-        public boolean onPreferenceChange(Preference preference, Object value) {
-            // TODO
-            return true;
+    private static void bindPreferenceSummaryToLongValue(Preference preference) {
+        // Set the listener to watch for value changes.
+        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+
+        // Trigger the listener immediately with the preference's
+        // current value.
+        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                PreferenceManager
+                        .getDefaultSharedPreferences(preference.getContext())
+                        .getLong(preference.getKey(), 0));
+    }
+
+    private void updateAlarm() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences( this );
+        boolean alarmEnabled = sharedPreferences.getBoolean("enable_daily_backup", false );
+
+        if( alarmEnabled )
+        {
+            m_alarm.setAlarm( this );
         }
-    };
+        else
+        {
+            m_alarm.cancelAlarm( this );
+        }
+    }
 
     /**
      * This fragment shows general preferences only. It is used when the
@@ -308,9 +326,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-            bindPreferenceSummaryToValue(findPreference("backup_trigger_time"));
-            findPreference("backup_trigger_time").setOnPreferenceChangeListener(sBindAlarmListener);
-            //bindPreferenceSummaryToValue(findPreference("example_list"));
+            bindPreferenceSummaryToLongValue(findPreference("backup_trigger_time"));
         }
     }
 
@@ -346,7 +362,6 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             addPreferencesFromResource(R.xml.pref_dropbox);
 
             m_dropBoxFragmentId = getId();
-            Log.d(TAG, "ID IS " + getId());
 
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
             // to their values. When their values change, their summaries are
@@ -379,6 +394,10 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                         createDropBoxWrapper();
                     }
                 }
+            }
+            else if( key.equals("enable_daily_backup") )
+            {
+                updateAlarm();
             }
         }
     }

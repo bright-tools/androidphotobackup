@@ -1,6 +1,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <SwitchPreference
+        android:key="enable_daily_backup"
+        android:title="@string/pref_daily_backup"
+        android:defaultValue="false" />
+
     <com.brightsilence.dev.androidphotobackup.TimePreference
+        android:dependency="enable_daily_backup"
         android:key="backup_trigger_time"
         android:title="Daily Backup Time"
         />

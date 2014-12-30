@@ -3,6 +3,7 @@
     <!-- Strings related to Settings -->
     <string name="pref_string_set">Set</string>
     <string name="pref_string_cancel">Cancel</string>
+    <string name="pref_daily_backup">Daily Backup</string>
 
 
     <!-- Example Security settings -->
