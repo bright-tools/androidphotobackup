@@ -16,6 +16,7 @@
     <string name="pref_header_dropbox">DropBox</string>
     <string name="pref_title_enable_dropbox">Enable Dropbox</string>
     <string name="pref_connect_to_dropbox">Connection to Dropbox</string>
+    <string name="pref_title_target_dir">Target Directory</string>
 
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>

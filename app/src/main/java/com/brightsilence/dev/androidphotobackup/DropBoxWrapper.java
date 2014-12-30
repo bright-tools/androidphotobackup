@@ -5,11 +5,15 @@ import android.content.Context;
 import android.util.Log;
 
 import com.dropbox.client2.DropboxAPI;
+import com.dropbox.client2.exception.DropboxException;
 import com.dropbox.client2.session.Session.AccessType;
 import com.dropbox.client2.android.AndroidAuthSession;
 import com.dropbox.client2.android.AuthActivity;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 public class DropBoxWrapper {
 
@@ -20,6 +24,8 @@ public class DropBoxWrapper {
     private static final String ACCESS_KEY_NAME = "ACCESS_KEY";
     private static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
     public static final String TAG = "PhotoBackup::DropBoxWrapper";
+
+    public static final int MAX_RETRIES = 3;
 
     private DropboxAPI<AndroidAuthSession> mDBApi;
 
@@ -48,6 +54,40 @@ public class DropBoxWrapper {
         AndroidAuthSession session = new AndroidAuthSession(appKeyPair);
         loadAuth(session);
         return session;
+    }
+
+    public boolean createDir(String dirName)
+    {
+        boolean retVal = false;
+
+        if( isConnected() )
+        {
+            if( dirName.length() > 0 ) {
+                try {
+                    DropboxAPI.Entry existingEntry = mDBApi.metadata("/" + dirName , 1, null, false, null);
+                    if(existingEntry.isDir && (!existingEntry.isDeleted))
+                    {
+                        Log.d(TAG, "Folder exists : " + dirName);
+                        retVal = true;
+                    }
+                } catch( DropboxException e )
+                {
+                    Log.d(TAG,e.toString());
+                }
+                if( retVal == false )
+                {
+                    try {
+                        mDBApi.createFolder("/" + dirName);
+                        retVal = true;
+                    } catch( DropboxException e )
+                    {
+                        Log.d(TAG,e.toString());
+                    }
+                }
+            }
+        }
+
+        return retVal;
     }
 
     private void loadAuth(AndroidAuthSession session) {
@@ -104,6 +144,27 @@ public class DropBoxWrapper {
         SharedPreferences.Editor edit = prefs.edit();
         edit.clear();
         edit.commit();
+    }
+
+    void upload( String fileName, InputStream in ) throws IOException, DropboxException
+    {
+        DropboxAPI.Entry uploadedFileMetadata;
+        try {
+            DropboxAPI.ChunkedUploader uploader = mDBApi.getChunkedUploader(in);
+            int retryCounter = 0;
+            while(!uploader.isComplete()) {
+                try {
+                    uploader.upload();
+                } catch (DropboxException e) {
+                    if (retryCounter > MAX_RETRIES) break;  // Give up after a while.
+                    retryCounter++;
+                    // Maybe wait a few seconds before retrying?
+                }
+            }
+            uploadedFileMetadata = uploader.finish("/"+fileName, null);
+        } finally {
+            in.close();
+        }
     }
 
     void onResume() {

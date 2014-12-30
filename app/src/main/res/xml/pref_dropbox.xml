@@ -12,4 +12,13 @@
         android:dependency="enable_dropbox_checkbox"
         android:defaultValue="false" />
 
+    <EditTextPreference
+        android:key="dropbox_target_dir"
+        android:dependency="enable_dropbox_checkbox"
+        android:title="@string/pref_title_target_dir"
+        android:defaultValue=""
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:maxLines="1" />
+
 </PreferenceScreen>
