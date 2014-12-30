@@ -61,7 +61,6 @@ public class PhotoBackupService extends IntentService {
         if( mDropBoxWrapper.isConnected() )
         {
             Log.d(TAG,"DropBox connected");
-
         }
         else
         {

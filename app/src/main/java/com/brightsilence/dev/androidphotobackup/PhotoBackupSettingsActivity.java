@@ -48,7 +48,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     private static PhotoBackupAlarmReceiver m_alarm = new PhotoBackupAlarmReceiver();
     private static int m_dropBoxFragmentId;
 
-    DropBoxWrapper m_dropBoxWrapper = null;
+    private DropBoxWrapper m_dropBoxWrapper = null;
 
     /**
      * Determines whether to always show the simplified settings UI, where
@@ -395,7 +395,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                     }
                 }
             }
-            else if( key.equals("enable_daily_backup") )
+            else if( key.equals("enable_daily_backup") ||
+                     key.equals("backup_trigger_time" ))
             {
                 updateAlarm();
             }
