@@ -65,26 +65,12 @@ public class PhotoBackupAlarmReceiver extends WakefulBroadcastReceiver {
         Intent intent = new Intent(context, PhotoBackupAlarmReceiver.class);
         alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
 
-        GregorianCalendar alarmSetCalendar = new GregorianCalendar();
-
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        long alarmSetTime = sharedPreferences.getLong("backup_trigger_time", 0 );
-        alarmSetCalendar.setTimeInMillis(alarmSetTime);
-        int hours = alarmSetCalendar.get(Calendar.HOUR_OF_DAY);
-        int minutes= alarmSetCalendar.get(Calendar.MINUTE);
-
-        Log.d(TAG, "Alarm setting: "+hours+":"+minutes);
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, hours );
-        calendar.set(Calendar.MINUTE, minutes );
-
-        long alarmTime = calendar.getTimeInMillis();
+        long alarmTime = sharedPreferences.getLong("backup_trigger_time", 0 );
 
         // Is the alarm in the past?  If so, setting it will trigger an alarm straight away,
         // which we don't want, so push the time out by a day.
-        if( alarmTime < System.currentTimeMillis() )
+        while( alarmTime < System.currentTimeMillis() )
         {
             alarmTime += AlarmManager.INTERVAL_DAY;
         }

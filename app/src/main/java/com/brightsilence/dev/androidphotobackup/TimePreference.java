@@ -52,6 +52,14 @@ public class TimePreference extends DialogPreference {
         super.onDialogClosed(positiveResult);
 
         if (positiveResult) {
+            // Update to the current day - as we're only interested in the
+            //  hour and minute components, this stops the actual calendar day
+            //  becoming somewhat historic
+            //  i.e. if the preference was 1st modified on the 1st June 2014,
+            //  without this update it would forever refer to that day, even
+            //  when the hour and minute components were changed.
+            calendar.setTimeInMillis(System.currentTimeMillis());
+
             calendar.set(Calendar.HOUR_OF_DAY, picker.getCurrentHour());
             calendar.set(Calendar.MINUTE, picker.getCurrentMinute());
 
