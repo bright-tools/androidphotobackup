@@ -168,10 +168,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
         // their values. When their values change, their summaries are updated
         // to reflect the new value, per the Android Design guidelines.
-//        bindPreferenceSummaryToValue(findPreference("example_text"));
-  //      bindPreferenceSummaryToValue(findPreference("example_list"));
-    //    bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
-      //  bindPreferenceSummaryToValue(findPreference("sync_frequency"));
+        bindPreferenceSummaryToValue(findPreference("backup_trigger_time"));
+        findPreference("backup_trigger_time").setOnPreferenceChangeListener(sBindAlarmListener);
     }
 
     /**
@@ -257,7 +255,6 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                         preference.setSummary(name);
                     }
                 }
-
             } else {
                 // For all other preferences, set the summary to the value's
                 // simple string representation.
@@ -288,6 +285,14 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                         .getString(preference.getKey(), ""));
     }
 
+    private static Preference.OnPreferenceChangeListener sBindAlarmListener = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object value) {
+            // TODO
+            return true;
+        }
+    };
+
     /**
      * This fragment shows general preferences only. It is used when the
      * activity is showing a two-pane settings UI.
@@ -303,7 +308,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
-            //bindPreferenceSummaryToValue(findPreference("example_text"));
+            bindPreferenceSummaryToValue(findPreference("backup_trigger_time"));
+            findPreference("backup_trigger_time").setOnPreferenceChangeListener(sBindAlarmListener);
             //bindPreferenceSummaryToValue(findPreference("example_list"));
         }
     }

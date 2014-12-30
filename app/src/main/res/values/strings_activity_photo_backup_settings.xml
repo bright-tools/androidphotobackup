@@ -1,6 +1,10 @@
 <resources>
 
     <!-- Strings related to Settings -->
+    <string name="pref_string_set">Set</string>
+    <string name="pref_string_cancel">Cancel</string>
+
+
     <!-- Example Security settings -->
     <string name="pref_header_security">Security</string>
     <string name="pref_title_password">Password</string>
