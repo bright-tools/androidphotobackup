@@ -56,6 +56,23 @@ public class DropBoxWrapper {
         return session;
     }
 
+    public boolean fileExists(String fileName)
+    {
+        boolean retVal = false;
+        if( isConnected() ) {
+            try {
+                DropboxAPI.Entry existingEntry = mDBApi.metadata("/" + fileName, 1, null, false, null);
+                if ((!existingEntry.isDir) && (!existingEntry.isDeleted)) {
+                    retVal = true;
+                }
+            } catch( DropboxException e )
+            {
+                e.printStackTrace();
+            }
+        }
+        return retVal;
+    }
+
     public boolean createDir(String dirName)
     {
         boolean retVal = false;
