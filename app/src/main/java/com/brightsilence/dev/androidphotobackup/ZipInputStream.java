@@ -46,15 +46,28 @@ public class ZipInputStream  extends FilterInputStream {
     private static final int bufferSize = 1024 * 1024;
     private static final int chunkSize = 1024 * 10;
 
-    public ZipInputStream(InputStream in, String fileName, String pass) throws ZipException {
+    public ZipInputStream(InputStream in, String fileName, String pass, String encyptionMethod) throws ZipException {
         super(in);
 
         zipParameters = new ZipParameters();
         zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
         zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
         zipParameters.setEncryptFiles(true);
+
+        String encParts[] = encyptionMethod.split(":");
+
         zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
-        zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+
+        if( encParts[1].equals("128") )
+        {
+            Log.d(TAG,"Encryption Strength 128-bit");
+            zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_128);
+        }
+        else
+        {
+            Log.d(TAG,"Encryption Strength 256-bit");
+            zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+        }
         // TODO: If password not set, don't run backup?
         zipParameters.setPassword(pass);
         //                                    parameters.setSourceExternalStream(true);

@@ -88,9 +88,6 @@ public class PhotoBackupService extends IntentService {
                         final int bucketDisplayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
                         final int dateModColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED);
 
-
-
-
                         do {
                             String bucketName = cursor.getString(bucketDisplayNameColIdx);
                             // TODO: Optimise this so that we're not calling create dir for directories which we already created.
@@ -104,7 +101,10 @@ public class PhotoBackupService extends IntentService {
 
                                 try {
                                     // TODO: Error if no password set?
-                                    ZipInputStream zipStream = new ZipInputStream(new FileInputStream(fileSrc),fileSrc,sharedPreferences.getString("password_text", ""));
+                                    ZipInputStream zipStream = new ZipInputStream(new FileInputStream(fileSrc),
+                                                                                  fileSrc,
+                                                                                  sharedPreferences.getString("password_text", ""),
+                                                                                  sharedPreferences.getString("zip_encryption_type",""));
                                     mDropBoxWrapper.upload( targetDir + "/" + bucketName + "/" + targetMediaFileName, zipStream );
 
                                 } catch (Exception e) {
