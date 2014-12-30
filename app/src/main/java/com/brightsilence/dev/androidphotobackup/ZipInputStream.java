@@ -85,6 +85,7 @@ public class ZipInputStream  extends FilterInputStream {
             if (readLen != -1) {
                 Log.d(TAG, "Writing to zipOutputStream");
                 zipOutputStream.write(readBuff, 0, readLen);
+                zipOutputStream.flush();
             } else {
                 Log.d(TAG, "Closing zipOutputStream");
                 zipOutputStream.closeEntry();
