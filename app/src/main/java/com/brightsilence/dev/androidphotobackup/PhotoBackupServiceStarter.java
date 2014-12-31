@@ -14,6 +14,7 @@ public class PhotoBackupServiceStarter extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") ||
             intent.getAction().equals("android.intent.action.QUICKBOOT_POWERON")) {
+            // TODO: Should only set the alarm if this is required.
             m_alarm.setAlarm( context );
         }
     }

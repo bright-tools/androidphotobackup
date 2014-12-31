@@ -13,6 +13,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -21,6 +22,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
 import android.preference.SwitchPreference;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -169,6 +171,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
         // their values. When their values change, their summaries are updated
         // to reflect the new value, per the Android Design guidelines.
+        findPreference("show_password_checkbox").setOnPreferenceChangeListener(sTogglePassword);
+
         bindPreferenceSummaryToLongValue(findPreference("backup_trigger_time"));
     }
 
@@ -264,6 +268,30 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         }
     };
 
+    private static Preference.OnPreferenceChangeListener sTogglePassword = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object value) {
+            String stringValue = value.toString();
+            EditTextPreference pref = (EditTextPreference)(preference.getPreferenceManager().findPreference("password_text"));
+
+            int inputType = InputType.TYPE_CLASS_TEXT;
+
+            if( stringValue.equals("true"))
+            {
+                Log.d(TAG,"Setting password visible");
+                inputType |= InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD;
+            }
+            else
+            {
+                Log.d(TAG,"Setting password hidden");
+                inputType |= InputType.TYPE_TEXT_VARIATION_PASSWORD;
+            }
+            pref.getEditText().setInputType(inputType);
+
+            return true;
+        }
+    };
+
     /**
      * Binds a preference's summary to its value. More specifically, when the
      * preference's value is changed, its summary (line of text below the
@@ -340,6 +368,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_security);
+
+            findPreference("show_password_checkbox").setOnPreferenceChangeListener(sTogglePassword);
 
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
             // to their values. When their values change, their summaries are
