@@ -192,23 +192,23 @@ public class DropBoxWrapper {
     void onResume() {
         AndroidAuthSession session = mDBApi.getSession();
 
-        // The next part must be inserted in the onResume() method of the
-        // activity from which session.startAuthentication() was called, so
-        // that Dropbox authentication completes properly.
-        if (session.authenticationSuccessful()) {
-            try {
-                Log.d(TAG,"onResume() Authentication successful");
+        if( !session.isLinked() ) {
+            // The next part must be inserted in the onResume() method of the
+            // activity from which session.startAuthentication() was called, so
+            // that Dropbox authentication completes properly.
+            if (session.authenticationSuccessful()) {
+                try {
+                    Log.d(TAG, "onResume() Authentication successful");
 
-                // Mandatory call to complete the auth
-                session.finishAuthentication();
+                    // Mandatory call to complete the auth
+                    session.finishAuthentication();
 
-                // Store it locally in our app for later use
-                storeAuth(session);
-                // TODO: Set status as good to go
-            }
-            catch (IllegalStateException e)
-            {
-                Log.i(TAG, "Error authenticating", e);
+                    // Store it locally in our app for later use
+                    storeAuth(session);
+                    // TODO: Set status as good to go
+                } catch (IllegalStateException e) {
+                    Log.i(TAG, "Error authenticating", e);
+                }
             }
         }
     }
