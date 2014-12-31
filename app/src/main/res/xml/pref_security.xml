@@ -10,15 +10,11 @@
         android:singleLine="true"
         android:maxLines="1" />
 
-    <!-- TODO: Add warning when changing password -->
-
     <CheckBoxPreference
         android:key="show_password_checkbox"
         android:title="@string/pref_title_show_password"
         android:summary="@string/pref_description_show_password"
         android:defaultValue="false" />
-
-    <!-- TODO: Add warning that this will not change files that are already uploaded -->
 
     <ListPreference
         android:key="zip_encryption_type"
