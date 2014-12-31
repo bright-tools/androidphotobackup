@@ -509,7 +509,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             else if( key.equals("enable_daily_backup") ||
                      key.equals("backup_trigger_time" ))
             {
-                if( m_lastPassword.length() == 0 )
+                if( sharedPreferences.getString( key, "").length() == 0 )
                 {
                     disableBackupsPwIsEmpty();
                 }
