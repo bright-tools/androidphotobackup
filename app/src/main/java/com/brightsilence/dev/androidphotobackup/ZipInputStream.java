@@ -54,19 +54,22 @@ public class ZipInputStream  extends FilterInputStream {
         zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
         zipParameters.setEncryptFiles(true);
 
-        String encParts[] = encyptionMethod.split(":");
+        String encParts[] = encyptionMethod.split("-");
 
-        zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
 
-        if( encParts[1].equals("128") )
-        {
-            Log.d(TAG,"Encryption Strength 128-bit");
-            zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_128);
-        }
-        else
-        {
-            Log.d(TAG,"Encryption Strength 256-bit");
-            zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+
+        if( encParts[0].equals("AES")) {
+            zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+            if (encParts[1].equals("128")) {
+                Log.d(TAG, "Encryption AES Strength 128-bit");
+                zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_128);
+            } else {
+                Log.d(TAG, "Encryption AES Strength 256-bit");
+                zipParameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+            }
+        } else {
+            zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_STANDARD);
+            Log.d(TAG, "Standard Encryption");
         }
         // TODO: If password not set, don't run backup?
         zipParameters.setPassword(pass);

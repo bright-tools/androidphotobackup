@@ -75,9 +75,11 @@ public class PhotoBackupAlarmReceiver extends WakefulBroadcastReceiver {
             alarmTime += AlarmManager.INTERVAL_DAY;
         }
 
-        Log.d(TAG, "Alarm set for: " + alarmTime+" (now: "+System.currentTimeMillis()+")");
         // TODO: Remove me
-        alarmTime = System.currentTimeMillis()-6000;
+        // TODO: This is here for testing only - the alarm will trigger immediately as it's set in the past.
+        //alarmTime = System.currentTimeMillis()-6000;
+
+        Log.d(TAG, "Alarm set for: " + alarmTime+" (now: "+System.currentTimeMillis()+")");
 
         /*
          * If you don't have precise time requirements, use an inexact repeating alarm

@@ -1,11 +1,11 @@
 package com.brightsilence.dev.androidphotobackup;
 
 import android.annotation.TargetApi;
-import android.app.AlarmManager;
-import android.app.Fragment;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.FragmentManager;
 import android.content.Context;
-import android.content.Intent;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
@@ -23,9 +23,10 @@ import android.preference.PreferenceManager;
 import android.preference.RingtonePreference;
 import android.preference.SwitchPreference;
 import android.text.InputType;
+import android.app.DialogFragment;
 import android.text.TextUtils;
 import android.util.Log;
-
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -48,9 +49,12 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
 
     private static PhotoBackupAlarmReceiver m_alarm = new PhotoBackupAlarmReceiver();
-    private static int m_dropBoxFragmentId;
+    private static int m_dropBoxFragmentId = -1;
+    private static int m_generalFragmentId = -1;
+    private static int m_securityFragmentId = -1;
 
     private DropBoxWrapper m_dropBoxWrapper = null;
+    private String m_lastPassword;
 
     /**
      * Determines whether to always show the simplified settings UI, where
@@ -63,13 +67,62 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     @Override
     @TargetApi(Build.VERSION_CODES.KITKAT)
     protected boolean isValidFragment(String fragmentName) {
-        return true;//GeneralPreferenceFragment.class.getName().equals(fragmentName);
+        return GeneralPreferenceFragment.class.getName().equals(fragmentName) ||
+               SecurityPreferenceFragment.class.getName().equals(fragmentName) ||
+               DropboxPreferenceFragment.class.getName().equals(fragmentName);
+    }
+
+    private EditTextPreference getPasswordTextPref()
+    {
+        EditTextPreference passwordPref = null;
+        PreferenceFragment prefFragment = null;
+
+        if( m_securityFragmentId != -1 )
+        {
+            prefFragment = (PreferenceFragment)getFragmentManager().findFragmentById(m_securityFragmentId);
+        }
+
+        if( prefFragment == null ) {
+            passwordPref = (EditTextPreference)findPreference("password_text");
+        } else {
+            passwordPref = (EditTextPreference)prefFragment.findPreference("password_text");
+        }
+        if( passwordPref == null ) {
+            Log.d(TAG,"getPasswordTextPref()::Failed to find preference");
+        }
+
+        return passwordPref;
+    }
+
+    private SwitchPreference getDailyBackupPref()
+    {
+        SwitchPreference backupPref = null;
+        PreferenceFragment prefFragment = null;
+
+        if( m_generalFragmentId != -1 ) {
+            prefFragment = (PreferenceFragment) getFragmentManager().findFragmentById(m_generalFragmentId);
+        }
+
+        if( prefFragment == null ) {
+            backupPref = (SwitchPreference)findPreference("enable_daily_backup");
+        } else {
+            backupPref = (SwitchPreference)prefFragment.findPreference("enable_daily_backup");
+        }
+        if( backupPref == null ) {
+            Log.d(TAG,"getDailyBackupPref()::Failed to find preference");
+        }
+
+        return backupPref;
     }
 
     private SwitchPreference getConnectionToDropBoxPref()
     {
         SwitchPreference connectedPref = null;
-        PreferenceFragment prefFragment = (PreferenceFragment)getFragmentManager().findFragmentById(m_dropBoxFragmentId);
+        PreferenceFragment prefFragment = null;
+
+        if( m_dropBoxFragmentId != -1 ) {
+            prefFragment = (PreferenceFragment) getFragmentManager().findFragmentById(m_dropBoxFragmentId);
+        }
 
         if( prefFragment == null ) {
             connectedPref = (SwitchPreference)findPreference("connection_to_dropbox");
@@ -77,7 +130,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             connectedPref = (SwitchPreference)prefFragment.findPreference("connection_to_dropbox");
         }
         if( connectedPref == null ) {
-            Log.d(TAG,"onResume()::Failed to find preference");
+            Log.d(TAG,"getConnectionToDropBoxPref()::Failed to find preference");
         }
 
         return connectedPref;
@@ -120,7 +173,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
 
-        m_prefsListener = new PhotoBackupPreferenceChanged();
+        m_prefsListener = new PhotoBackupPreferenceChanged(this);
     }
 
     @Override
@@ -136,6 +189,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             createDropBoxWrapper(false);
             checkDisableConnectionToDropBoxPref();
         }
+
+        m_lastPassword = sharedPreferences.getString("password_text","");
 
         updateAlarm();
     }
@@ -171,7 +226,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
         // their values. When their values change, their summaries are updated
         // to reflect the new value, per the Android Design guidelines.
-        findPreference("show_password_checkbox").setOnPreferenceChangeListener(sTogglePassword);
+        bindPasswordPreference(findPreference("show_password_checkbox"));
 
         bindPreferenceSummaryToLongValue(findPreference("backup_trigger_time"));
     }
@@ -325,6 +380,19 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                         .getLong(preference.getKey(), 0));
     }
 
+    private static void bindPasswordPreference(Preference preference) {
+        // Set the listener to watch for value changes.
+        preference.setOnPreferenceChangeListener(sTogglePassword);
+
+        // Trigger the listener immediately with the preference's
+        // current value.
+        sTogglePassword.onPreferenceChange(preference,
+                PreferenceManager
+                        .getDefaultSharedPreferences(preference.getContext())
+                        .getBoolean(preference.getKey(), false));
+    }
+
+
     private void updateAlarm() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences( this );
         boolean alarmEnabled = sharedPreferences.getBoolean("enable_daily_backup", false );
@@ -350,6 +418,8 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_general);
 
+            m_generalFragmentId = getId();
+
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
@@ -369,7 +439,9 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_security);
 
-            findPreference("show_password_checkbox").setOnPreferenceChangeListener(sTogglePassword);
+            m_securityFragmentId = getId();
+
+            bindPasswordPreference(findPreference("show_password_checkbox"));
 
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
             // to their values. When their values change, their summaries are
@@ -404,6 +476,15 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
     public class PhotoBackupPreferenceChanged implements SharedPreferences.OnSharedPreferenceChangeListener {
         public static final String TAG = "PhotoBackup::PhotoBackupPreferenceChanged";
+
+        private PreferenceActivity m_parent;
+
+        public PhotoBackupPreferenceChanged( PreferenceActivity parent )
+        {
+            super();
+            m_parent = parent;
+        }
+
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
                                               String key) {
             Log.d(TAG, "onSharedPreferenceChanged : " + key);
@@ -428,7 +509,41 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             else if( key.equals("enable_daily_backup") ||
                      key.equals("backup_trigger_time" ))
             {
-                updateAlarm();
+                if( m_lastPassword.length() == 0 )
+                {
+                    disableBackupsPwIsEmpty();
+                }
+                else if( sharedPreferences.getBoolean("enable_dropbox_checkbox", false ) &&
+                        sharedPreferences.getBoolean("connection_to_dropbox", false ) ) {
+                    updateAlarm();
+                }
+                else
+                {
+                    disableBackupsDestUnconfigured();
+                }
+            }
+            else if( key.equals("password_text")) {
+                FragmentManager fragmentManager = m_parent.getFragmentManager();
+
+                // Is the password being changed, as opposed to initially set?
+                if( ! m_lastPassword.equals(""))
+                {
+                    Log.d(TAG,"Password change: "+m_lastPassword+" to "+sharedPreferences.getString("password_text",""));
+                    if(! m_lastPassword.equals( sharedPreferences.getString("password_text","") )) {
+                        ChangePasswordDialogFragment changePasswordDialog = new ChangePasswordDialogFragment();
+                        changePasswordDialog.show(fragmentManager, "ChangePasswordDialogFragment");
+                        // TODO: Allow user to set the re-upload option
+                    }
+                }
+                else
+                {
+                    disableBackupsPwIsEmpty();
+                    m_lastPassword = sharedPreferences.getString("password_text","");
+                }
+            }
+            else if( key.equals( "zip_encryption_type" ))
+            {
+                warnEncryptionChanged();
             }
         }
     }
@@ -454,6 +569,82 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         {
             m_dropBoxWrapper.clearKeys();
             m_dropBoxWrapper = null;
+        }
+    }
+
+    private void acceptPassword()
+    {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        m_lastPassword = sharedPreferences.getString("password_text", "");
+    }
+
+    private void resetPassword()
+    {
+        EditTextPreference pref = getPasswordTextPref();
+        if( pref != null ) {
+            Log.d(TAG,"Resetting password");
+            pref.setText( m_lastPassword);
+        } else
+        {
+            Log.d(TAG,"Couldn't get password text preference");
+        }
+    }
+
+    private void disableBackups()
+    {
+        SwitchPreference backupPref = getDailyBackupPref();
+        if( backupPref != null )
+        {
+            backupPref.setChecked(false);
+        }
+    }
+
+    private void disableBackupsDestUnconfigured()
+    {
+        CharSequence text = "Dropbox not enabled & connected, backups disabled";
+
+        Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
+        toast.show();
+
+        disableBackups();
+    }
+
+    private void disableBackupsPwIsEmpty()
+    {
+        CharSequence text = "Zip password cannot be empty, backups disabled";
+
+        Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
+        toast.show();
+
+        disableBackups();
+    }
+
+    private void warnEncryptionChanged()
+    {
+        CharSequence text = "New encryption setting will not effect files already uploaded";
+
+        Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
+        toast.show();
+    }
+
+    public class ChangePasswordDialogFragment extends DialogFragment {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the Builder class for convenient dialog construction
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setMessage(R.string.change_password_warning)
+                    .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            acceptPassword();
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            resetPassword();
+                        }
+                    });
+            // Create the AlertDialog object and return it
+            return builder.create();
         }
     }
 }

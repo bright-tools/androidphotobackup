@@ -110,6 +110,7 @@ public class PhotoBackupService extends IntentService {
 
                                 String targetPathAndName = targetDir + "/" + bucketName + "/" + targetMediaFileName;
                                 if( !mDropBoxWrapper.fileExists( targetPathAndName )) {
+                                    Log.d(TAG,"File doesn't already exist");
                                     try {
                                         // TODO: Error if no password set?
                                         ZipInputStream zipStream = new ZipInputStream(new FileInputStream(fileSrc),
@@ -120,6 +121,8 @@ public class PhotoBackupService extends IntentService {
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
+                                } else {
+                                    Log.d(TAG,"File exists");
                                 }
                             }
                             else

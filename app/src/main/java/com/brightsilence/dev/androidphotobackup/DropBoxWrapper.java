@@ -102,6 +102,11 @@ public class DropBoxWrapper {
                     }
                 }
             }
+            else
+            {
+                /* No directory specified, nothing to create ... report success */
+                retVal = true;
+            }
         }
 
         return retVal;
