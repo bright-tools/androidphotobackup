@@ -524,12 +524,18 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             }
             else if( key.equals("password_text")) {
                 FragmentManager fragmentManager = m_parent.getFragmentManager();
+                String newPassword = sharedPreferences.getString( key, "" );
 
-                // Is the password being changed, as opposed to initially set?
-                if( ! m_lastPassword.equals(""))
+                if( newPassword.length() == 0 )
                 {
-                    Log.d(TAG,"Password change: "+m_lastPassword+" to "+sharedPreferences.getString("password_text",""));
-                    if(! m_lastPassword.equals( sharedPreferences.getString("password_text","") )) {
+                    disableBackupsPwIsEmpty();
+                    m_lastPassword = newPassword;
+                }
+                // Is the password being changed, as opposed to initially set?
+                else if( ! m_lastPassword.equals("") )
+                {
+                    Log.d(TAG,"Password change: "+m_lastPassword+" to "+newPassword);
+                    if(! m_lastPassword.equals( newPassword )) {
                         ChangePasswordDialogFragment changePasswordDialog = new ChangePasswordDialogFragment();
                         changePasswordDialog.show(fragmentManager, "ChangePasswordDialogFragment");
                         // TODO: Allow user to set the re-upload option
@@ -537,8 +543,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                 }
                 else
                 {
-                    disableBackupsPwIsEmpty();
-                    m_lastPassword = sharedPreferences.getString("password_text","");
+                    m_lastPassword = newPassword;
                 }
             }
             else if( key.equals( "zip_encryption_type" ))
