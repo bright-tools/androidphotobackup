@@ -65,94 +65,110 @@ public class PhotoBackupService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.d(TAG,"Intent");
-        mDropBoxWrapper = new DropBoxWrapper( getApplicationContext() );
-        if( mDropBoxWrapper.isConnected() )
-        {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String resultString = "";
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
-            Log.d(TAG,"DropBox connected");
-            String targetDir = sharedPreferences.getString("dropbox_target_dir","" );
-            Log.d(TAG,"Creating directory "+targetDir);
-            if( mDropBoxWrapper.createDir( targetDir ))
+        Log.d(TAG,"onHandleIntent");
+
+        if( sharedPreferences.getBoolean("enable_dropbox_checkbox", false ) &&
+            sharedPreferences.getBoolean("connection_to_dropbox", false ) ) {
+
+            mDropBoxWrapper = new DropBoxWrapper( getApplicationContext() );
+
+            if( mDropBoxWrapper.isConnected() )
             {
-                ContentResolver contentResolver = getContentResolver();
-                for (int i = 0; i < 2; i++) {
-                    Uri src;
-                    if (i == 0) {
-                        src = MediaStore.Images.Media.INTERNAL_CONTENT_URI;
-                        Log.d(TAG, "Examining internal media storage\n");
-                    } else {
-                        src = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                        Log.d(TAG, "Examining external media storage\n");
-                    }
-                    Cursor cursor = contentResolver.query(src, null, null, null, null);
 
-                    if (cursor.moveToFirst()) {
+                Log.d(TAG,"DropBox connected");
+                String targetDir = sharedPreferences.getString("dropbox_target_dir","" );
+                Log.d(TAG,"Creating directory "+targetDir);
+                if( mDropBoxWrapper.createDir( targetDir ))
+                {
+                    ContentResolver contentResolver = getContentResolver();
+                    for (int i = 0; i < 2; i++) {
+                        Uri src;
+                        if (i == 0) {
+                            src = MediaStore.Images.Media.INTERNAL_CONTENT_URI;
+                            Log.d(TAG, "Examining internal media storage\n");
+                        } else {
+                            src = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                            Log.d(TAG, "Examining external media storage\n");
+                        }
+                        Cursor cursor = contentResolver.query(src, null, null, null, null);
 
-                        // TODO: Add "Replace all" setting
+                        if (cursor.moveToFirst()) {
 
-                        final int displayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
-                        final int bucketDisplayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
-                        final int dateModColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED);
+                            // TODO: Add "Replace all" setting
 
-                        /* Map of all of the directories that have been checked for existence (or created) */
-                        Set<String> existingDirs = new HashSet<String>();
+                            final int displayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+                            final int bucketDisplayNameColIdx = cursor.getColumnIndex(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+                            final int dateModColIdx = cursor.getColumnIndex(MediaStore.Images.Media.DATE_MODIFIED);
 
-                        do {
-                            String bucketName = cursor.getString(bucketDisplayNameColIdx);
+                            /* Map of all of the directories that have been checked for existence (or created) */
+                            Set<String> existingDirs = new HashSet<String>();
 
-                            /* Check to see if the directory has already been checked & if not, attempt to create it. */
-                            if( existingDirs.contains( bucketName ) ||
-                                ( mDropBoxWrapper.createDir( targetDir + "/" + bucketName ) &&
-                                  existingDirs.add( bucketName ) )) {
+                            do {
+                                String bucketName = cursor.getString(bucketDisplayNameColIdx);
 
-                                String mediaFileName = cursor.getString(displayNameColIdx);
-                                String mediaModified = cursor.getString(dateModColIdx);
-                                String targetMediaFileName = mediaFileName + "." + mediaModified + ".zip";
+                                /* Check to see if the directory has already been checked & if not, attempt to create it. */
+                                if( existingDirs.contains( bucketName ) ||
+                                    ( mDropBoxWrapper.createDir( targetDir + "/" + bucketName ) &&
+                                      existingDirs.add( bucketName ) )) {
 
-                                String fileSrc = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
-                                Log.d(TAG, "File Source: " + fileSrc);
+                                    String mediaFileName = cursor.getString(displayNameColIdx);
+                                    String mediaModified = cursor.getString(dateModColIdx);
+                                    String targetMediaFileName = mediaFileName + "." + mediaModified + ".zip";
 
-                                String targetPathAndName = targetDir + "/" + bucketName + "/" + targetMediaFileName;
-                                if( !mDropBoxWrapper.fileExists( targetPathAndName )) {
-                                    Log.d(TAG,"File doesn't already exist");
-                                    try {
-                                        // TODO: Error if no password set?
-                                        ZipInputStream zipStream = new ZipInputStream(new FileInputStream(fileSrc),
-                                                fileSrc,
-                                                sharedPreferences.getString("password_text", ""),
-                                                sharedPreferences.getString("zip_encryption_type", ""));
-                                        mDropBoxWrapper.upload(targetPathAndName, zipStream);
-                                    } catch (Exception e) {
-                                        e.printStackTrace();
+                                    String fileSrc = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+                                    Log.d(TAG, "File Source: " + fileSrc);
+
+                                    String targetPathAndName = targetDir + "/" + bucketName + "/" + targetMediaFileName;
+                                    if( !mDropBoxWrapper.fileExists( targetPathAndName )) {
+                                        Log.d(TAG,"File doesn't already exist");
+                                        try {
+                                            // TODO: Error if no password set?
+                                            ZipInputStream zipStream = new ZipInputStream(new FileInputStream(fileSrc),
+                                                    fileSrc,
+                                                    sharedPreferences.getString("password_text", ""),
+                                                    sharedPreferences.getString("zip_encryption_type", ""));
+                                            mDropBoxWrapper.upload(targetPathAndName, zipStream);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                        }
+                                    } else {
+                                        Log.d(TAG,"File exists");
                                     }
-                                } else {
-                                    Log.d(TAG,"File exists");
                                 }
-                            }
-                            else
-                            {
-                                Log.d(TAG,"Failed to create bucket directory for: "+bucketName);
-                            }
-                        } while (cursor.moveToNext());
+                                else
+                                {
+                                    Log.d(TAG,"Failed to create bucket directory for: "+bucketName);
+                                }
+                            } while (cursor.moveToNext());
+                        }
+
+                        Log.d(TAG,"Finished storage examination");
+
+                        cursor.close();
+                        // TODO: Complete, but maybe with errors
+                        resultString = "Backup complete";
                     }
-
-                    Log.d(TAG,"Finished storage examination");
-
-                    cursor.close();
+                } else
+                {
+                    Log.d(TAG,"Top-level directory creation failed");
+                    resultString = "Couldn't create container directory";
                 }
-            } else
+            }
+            else
             {
-                Log.d(TAG,"Top-level directory creation failed");
+                Log.d(TAG,"DropBox not connected");
+                resultString = "Dropbox not connected";
             }
         }
         else
         {
-            Log.d(TAG,"DropBox not connected");
+            resultString = "Dropbox not enabled";
         }
-        // TODO: Add some status
-        doNotification("Backup Complete");
+
+        doNotification(resultString);
     }
 
     void doNotification( String notificationText )
