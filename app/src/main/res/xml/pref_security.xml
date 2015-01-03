@@ -1,0 +1,26 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+        android:key="password_text"
+        android:title="@string/pref_title_password"
+        android:defaultValue=""
+        android:selectAllOnFocus="true"
+        android:inputType="textPassword"
+        android:capitalize="none"
+        android:singleLine="true"
+        android:maxLines="1" />
+
+    <CheckBoxPreference
+        android:key="show_password_checkbox"
+        android:title="@string/pref_title_show_password"
+        android:summary="@string/pref_description_show_password"
+        android:defaultValue="false" />
+
+    <ListPreference
+        android:key="zip_encryption_type"
+        android:title="Zip Encryption Type"
+        android:entries="@array/list_encryption_entries"
+        android:entryValues="@array/list_encryption_values"
+        android:defaultValue="AES-128"/>
+
+</PreferenceScreen>

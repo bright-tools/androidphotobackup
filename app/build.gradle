@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion "19.1.0"
+    compileSdkVersion 20
+    buildToolsVersion "21.1.2"
 
     defaultConfig {
-        applicationId "com.brightsilence.photobackup"
-        minSdkVersion 15
-        targetSdkVersion 19
+        applicationId "com.brightsilence.dev.androidphotobackup"
+        minSdkVersion 14
+        targetSdkVersion 20
         versionCode 1
         versionName "1.0"
     }
@@ -17,13 +17,19 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    // Need these as the JAR files we're pulling in contain duplicates.
+    //  See https://code.google.com/p/android/issues/detail?id=61573#c14
+    //  and https://code.google.com/p/android/issues/detail?id=67878
+    packagingOptions {
+        pickFirst  'META-INF/LICENSE'
+        pickFirst  'META-INF/LICENSE.txt'
+        pickFirst  'META-INF/NOTICE'
+        pickFirst  'META-INF/NOTICE.txt'
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:support-v4:21.0.3'
-    compile 'com.google.android.gms:play-services:6.5.+'
-    compile 'com.google.apis:google-api-services-drive:v2-rev154-1.19.0'
-    compile 'com.google.api-client:google-api-client-android:1.19.0' exclude module: 'httpclient'
-    compile 'com.google.api-client:google-api-client-gson:1.19.0' exclude module: 'httpclient'
 }
