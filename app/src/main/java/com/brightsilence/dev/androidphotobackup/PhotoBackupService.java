@@ -19,10 +19,15 @@ limitations under the License.
 package com.brightsilence.dev.androidphotobackup;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.os.*;
 import android.os.Process;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.widget.Toast;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -48,6 +53,7 @@ import java.util.Set;
 public class PhotoBackupService extends IntentService {
 
     public static final String TAG = "PhotoBackup::PhotoBackupService";
+    public static final int m_notificationId = 111;
 
     private DropBoxWrapper            mDropBoxWrapper = null;
 
@@ -145,5 +151,40 @@ public class PhotoBackupService extends IntentService {
         {
             Log.d(TAG,"DropBox not connected");
         }
+        // TODO: Add some status
+        doNotification("Backup Complete", false);
+    }
+
+    void doNotification( String notificationText )
+    {
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_launcher)
+                        .setContentTitle("Android Photo Backup Complete")
+                        .setContentText(notificationText);
+
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(this, PhotoBackupSettingsActivity.class);
+
+        // The stack builder object will contain an artificial back stack for the
+        // started Activity.
+        // This ensures that navigating backward from the Activity leads out of
+        // your application to the Home screen.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        // Adds the back stack for the Intent (but not the Intent itself)
+        stackBuilder.addParentStack(PhotoBackupSettingsActivity.class);
+        // Adds the Intent that starts the Activity to the top of the stack
+        stackBuilder.addNextIntent(resultIntent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(
+                        0,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // mId allows you to update the notification later on.
+        mNotificationManager.notify(m_notificationId, mBuilder.build());
     }
 }
