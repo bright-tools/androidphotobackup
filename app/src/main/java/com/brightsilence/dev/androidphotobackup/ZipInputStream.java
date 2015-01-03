@@ -43,8 +43,8 @@ public class ZipInputStream  extends FilterInputStream {
     public static final String TAG = "PhotoBackup::ZipInputStream";
 
 
-    private static final int bufferSize = 1024 * 1024;
-    private static final int chunkSize = 1024 * 10;
+    private static final int chunkSize = 1024 * 150;
+    private static final int bufferSize = (int)(chunkSize * 1.1);
 
     public ZipInputStream(InputStream in, String fileName, String pass, String encyptionMethod) throws ZipException {
         super(in);
@@ -55,8 +55,6 @@ public class ZipInputStream  extends FilterInputStream {
         zipParameters.setEncryptFiles(true);
 
         String encParts[] = encyptionMethod.split("-");
-
-
 
         if( encParts[0].equals("AES")) {
             zipParameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
@@ -94,7 +92,9 @@ public class ZipInputStream  extends FilterInputStream {
 
         Log.d(TAG,"Available: "+byteArraySize + " (ptr: "+outputStreamReadPoint+")");
 
-        if( !zipOutputStreamFinished) {
+        /* Keep feeding the ZipOutputStream until there's something in the ByteArrayOutputStream or
+           the entire input file has been processed */
+        while ( !zipOutputStreamFinished && ( byteOutputStream.size() == 0 )) {
             // Read the file content and write it to the OutputStream
             readLen = in.read(readBuff);
             Log.d(TAG, "Read from input stream: " + readLen);
@@ -162,9 +162,7 @@ public class ZipInputStream  extends FilterInputStream {
         if( outputStreamReadPoint >= byteArraySize ) {
             try {
                 updateByteArray();
-            }
-            catch( ZipException e )
-            {
+                } catch (ZipException e) {
                 e.printStackTrace();
             }
         }
