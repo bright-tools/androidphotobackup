@@ -152,7 +152,7 @@ public class PhotoBackupService extends IntentService {
             Log.d(TAG,"DropBox not connected");
         }
         // TODO: Add some status
-        doNotification("Backup Complete", false);
+        doNotification("Backup Complete");
     }
 
     void doNotification( String notificationText )
