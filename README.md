@@ -26,23 +26,21 @@ they are not encrypted or secured in any way - you should take appropriate
 precautions to prevent someone accessing the data on your phone in the case that
 it is lost or stolen.
 
+Frequently Asked Questions
+--------------------------
+
+Q: I've forgotten my password - is it stored anywhere?
+A: The password is stored on within the application.  If you've uninstalled it,
+    no longer have access to the device or have cleared the application settings
+    then there is no way to retrieve it.  The password is not stored on any of
+    the cloud services which files are uploaded to.
+
 TODO List
 ---------
 
-Check whether filename & date match
-Create ZIP & upload for non-matched files
-Ensure password saved when changed
-
-
-Choice of cloud storage services
-Choice of encryption methods
-Choose/customise list of directories to be backed up
-Add option to allow files no longer present on the 'phone to be deleted
-Make tabs scrollable - see http://developer.android.com/training/implementing-navigation/lateral.html
-Tidy up UI - remove menu?
-Add restore function?
-Option to unconditionally replace files
-Add timed backups
-Add inhibit for when not on Wifi
-Add notification when backup completes
+JavaDoc
+"How to" guide
+"FAQ"
+Add disclaimer
+Add TODO screen
 Hookup back-up log within UI
