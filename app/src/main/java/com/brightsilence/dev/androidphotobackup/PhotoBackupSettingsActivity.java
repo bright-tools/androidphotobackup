@@ -28,6 +28,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.text.DateFormat;
 import java.util.List;
 
 /**
@@ -191,6 +192,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         }
 
         m_lastPassword = sharedPreferences.getString("password_text","");
+        setLastBackupTime();
 
         updateAlarm();
     }
@@ -550,6 +552,30 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             {
                 warnEncryptionChanged();
             }
+            else if( key.equals("last_backup_time"))
+            {
+                setLastBackupTime();
+            }
+        }
+    }
+
+    private void setLastBackupTime()
+    {
+        SwitchPreference dailyBackupPref = getDailyBackupPref();
+
+        if( dailyBackupPref != null ) {
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+            Long lastBackupTime = sharedPreferences.getLong("last_backup_time", 0);
+
+            String lastBackupString = "Last Run: ";
+
+            if (lastBackupTime > 0) {
+                lastBackupString += DateFormat.getDateTimeInstance().format(lastBackupTime);
+            } else {
+                lastBackupString += "Never";
+            }
+
+            dailyBackupPref.setSummary(lastBackupString);
         }
     }
 
