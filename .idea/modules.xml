@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/PhotoBackup.iml" filepath="$PROJECT_DIR$/PhotoBackup.iml" />
-      <module fileurl="file://$PROJECT_DIR$/androidphotobackup.iml" filepath="$PROJECT_DIR$/androidphotobackup.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
