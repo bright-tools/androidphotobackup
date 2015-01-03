@@ -1,8 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Android Photo Backup</string>
 
-    <string name="change_password_warning">Changing your password may result in uploaded backups having a mixture of different passwords</string>
-    <string name="ok">OK</string>
-    <string name="cancel">Cancel</string>
+    <string name="app_name">PhotoBackup</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
 
 </resources>

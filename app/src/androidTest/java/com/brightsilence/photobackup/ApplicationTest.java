@@ -1,4 +1,4 @@
-package com.brightsilence.dev.androidphotobackup;
+package com.brightsilence.photobackup;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
