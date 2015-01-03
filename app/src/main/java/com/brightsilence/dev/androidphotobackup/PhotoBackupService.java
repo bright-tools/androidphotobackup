@@ -62,6 +62,14 @@ public class PhotoBackupService extends IntentService {
         super("PhotoBackupService");
     }
 
+    private void updateLastBackupTime()
+    {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor preferenceEditor = sharedPreferences.edit();
+
+        preferenceEditor.putLong("last_backup_time",System.currentTimeMillis());
+        preferenceEditor.apply();
+    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -169,6 +177,7 @@ public class PhotoBackupService extends IntentService {
         }
 
         doNotification(resultString);
+        updateLastBackupTime();
     }
 
     void doNotification( String notificationText )
