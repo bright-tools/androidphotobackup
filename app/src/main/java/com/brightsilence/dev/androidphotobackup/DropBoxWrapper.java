@@ -170,6 +170,10 @@ public class DropBoxWrapper {
 
     void upload( String fileName, InputStream in ) throws IOException, DropboxException
     {
+        boolean allOk = true;
+
+        // TODO: Check that there's enough quota
+
         DropboxAPI.Entry uploadedFileMetadata;
         try {
             DropboxAPI.ChunkedUploader uploader = mDBApi.getChunkedUploader(in);
@@ -178,12 +182,23 @@ public class DropBoxWrapper {
                 try {
                     uploader.upload();
                 } catch (DropboxException e) {
-                    if (retryCounter > MAX_RETRIES) break;  // Give up after a while.
+                    if (retryCounter > MAX_RETRIES)
+                    {
+                        e.printStackTrace();
+                        allOk = false;
+                        break;  // Give up after a while.
+                    }
                     retryCounter++;
                     // Maybe wait a few seconds before retrying?
                 }
             }
+            if( allOk ) {
             uploadedFileMetadata = uploader.finish("/"+fileName, null);
+                Log.d(TAG, "Uploaded " + uploadedFileMetadata.fileName() + ", size: " + uploadedFileMetadata.size);
+            } else {
+                Log.d(TAG, "Upload of "+fileName+" failed");
+
+            }
         } finally {
             in.close();
         }
