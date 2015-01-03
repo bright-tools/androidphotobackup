@@ -63,7 +63,7 @@ public class PhotoBackupAlarmReceiver extends WakefulBroadcastReceiver {
     public void setAlarm(Context context) {
         alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, PhotoBackupAlarmReceiver.class);
-        alarmIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
+        alarmIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         long alarmTime = sharedPreferences.getLong("backup_trigger_time", 0 );
@@ -77,7 +77,7 @@ public class PhotoBackupAlarmReceiver extends WakefulBroadcastReceiver {
 
         // TODO: Remove me
         // TODO: This is here for testing only - the alarm will trigger immediately as it's set in the past.
-        //alarmTime = System.currentTimeMillis()-6000;
+        alarmTime = System.currentTimeMillis()-6000;
 
         Log.d(TAG, "Alarm set for: " + alarmTime+" (now: "+System.currentTimeMillis()+")");
 
