@@ -1,3 +1,21 @@
+/*
+
+Copyright 2014 John Bailey
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+ */
+
 package com.brightsilence.dev.androidphotobackup;
 
 import android.content.SharedPreferences;
@@ -6,25 +24,38 @@ import android.util.Log;
 
 import com.dropbox.client2.DropboxAPI;
 import com.dropbox.client2.exception.DropboxException;
-import com.dropbox.client2.session.Session.AccessType;
 import com.dropbox.client2.android.AndroidAuthSession;
-import com.dropbox.client2.android.AuthActivity;
 import com.dropbox.client2.session.AccessTokenPair;
 import com.dropbox.client2.session.AppKeyPair;
 
 import java.io.IOException;
 import java.io.InputStream;
 
+/** This class wraps & abstracts the DropBox API into a few high-level functions which are
+    used by Android Photo Backup
+ */
 public class DropBoxWrapper {
 
+    /** DropBox application key, taken from the DropBox Application Console,
+        https://www.dropbox.com/developers/apps
+        Needs to be kept in sync with the value in AndroidManifest.xml */
     private static final String APP_KEY = "jr5gypgxq80yuin";
+
+    /** DropBox application secret, taken from the DropBox Application Console. */
     private static final String APP_SECRET = "txdlkunfq2qhdcf";
 
+    /** Preferences name for DropBox specific preferences */
     private static final String ACCOUNT_PREFS_NAME = PhotoBackupSettingsActivity.PREFERENCES_FILE_KEY+"-DropBox";
+
+    /** Preference key for the DropBox access key */
     private static final String ACCESS_KEY_NAME = "ACCESS_KEY";
+
+    /** Preference key for the DropBox access secret */
     private static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
+
     public static final String TAG = "PhotoBackup::DropBoxWrapper";
 
+    /** Number of times to retry uploading a file chunk before giving up */
     public static final int MAX_RETRIES = 3;
 
     private DropboxAPI<AndroidAuthSession> mDBApi;
@@ -141,23 +172,21 @@ public class DropBoxWrapper {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putString(ACCESS_KEY_NAME, "oauth2:");
             edit.putString(ACCESS_SECRET_NAME, oauth2AccessToken);
-            edit.commit();
+            edit.apply();
             Log.d(TAG,"Stored OAuth 2 token");
-
-            return;
         }
-        // Store the OAuth 1 access token, if there is one.  This is only necessary if
-        // you're still using OAuth 1.
-        AccessTokenPair oauth1AccessToken = session.getAccessTokenPair();
-        if (oauth1AccessToken != null) {
-            SharedPreferences prefs = mContext.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
-            SharedPreferences.Editor edit = prefs.edit();
-            edit.putString(ACCESS_KEY_NAME, oauth1AccessToken.key);
-            edit.putString(ACCESS_SECRET_NAME, oauth1AccessToken.secret);
-            edit.commit();
-            Log.d(TAG,"Stored OAuth 1 keypair");
-
-            return;
+        else {
+            // Store the OAuth 1 access token, if there is one.  This is only necessary if
+            // you're still using OAuth 1.
+            AccessTokenPair oauth1AccessToken = session.getAccessTokenPair();
+            if (oauth1AccessToken != null) {
+                SharedPreferences prefs = mContext.getSharedPreferences(ACCOUNT_PREFS_NAME, 0);
+                SharedPreferences.Editor edit = prefs.edit();
+                edit.putString(ACCESS_KEY_NAME, oauth1AccessToken.key);
+                edit.putString(ACCESS_SECRET_NAME, oauth1AccessToken.secret);
+                edit.apply();
+                Log.d(TAG, "Stored OAuth 1 keypair");
+            }
         }
     }
 
@@ -220,7 +249,6 @@ public class DropBoxWrapper {
 
                     // Store it locally in our app for later use
                     storeAuth(session);
-                    // TODO: Set status as good to go
                 } catch (IllegalStateException e) {
                     Log.i(TAG, "Error authenticating", e);
                 }
