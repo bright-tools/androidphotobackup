@@ -44,3 +44,4 @@ JavaDoc
 Add disclaimer
 Add TODO screen
 Hookup back-up log within UI
+New icon
