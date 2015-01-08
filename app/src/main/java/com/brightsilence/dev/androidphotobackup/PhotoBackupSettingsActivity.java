@@ -26,6 +26,10 @@ import android.text.InputType;
 import android.app.DialogFragment;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import java.text.DateFormat;
@@ -175,6 +179,31 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         super.onCreate(savedInstanceState);
 
         m_prefsListener = new PhotoBackupPreferenceChanged(this);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_settings, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        showAbout();
+        return true;
+    }
+
+    protected void showAbout() {
+        View messageView = getLayoutInflater().inflate(R.layout.about, null, false);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setCancelable(true);
+        builder.setTitle("About "+getResources().getString(R.string.app_name));
+        builder.setView(messageView);
+        builder.create();
+        builder.show();
     }
 
     @Override
