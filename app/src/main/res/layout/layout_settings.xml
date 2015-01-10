@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:minHeight="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        app:theme="@style/AppTheme"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+        android:theme="@style/SettingsTheme"
+        android:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
 </LinearLayout>

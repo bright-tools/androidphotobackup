@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="SettingsTheme" parent="style/Theme.AppCompat.Light">
+    <style name="SettingsTheme" parent="AppTheme">
+        <item name="android:textColorPrimary">@color/colourWhite</item>
+
+        <!-- android:textColorSecondary is the color of the menu
+             overflow icon (three vertical dots) -->
+        <item name="android:textColorSecondary">@color/colourWhite</item>
     </style>
 </resources>
 

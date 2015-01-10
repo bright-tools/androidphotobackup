@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="colourIndigo900">#1a237E</color>
     <color name="colourBlue500">#2196F3</color>
     <color name="colourBlue900">#0D47A1</color>
+    <color name="colourBlue800">#1565C0</color>
     <color name="colourBlue100">#BBDEFB</color>
+    <color name="colourBlue50">#E3F2FD</color>
+    <color name="colourGrey100">#F5F5F5</color>
+    <color name="colourGrey500">#9E9E9E</color>
+    <color name="colourGrey700">#616161</color>
+    <color name="colourGrey900">#212121</color>
+    <color name="colourOrange700">#E64A19</color>
     <color name="colourWhite">#FFFFFF</color>
+    <color name="colourBlack">#000000</color>
+
+    <color name="colourPink">#EA80FC</color>
+
 </resources>
