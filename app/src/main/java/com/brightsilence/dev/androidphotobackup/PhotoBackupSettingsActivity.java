@@ -30,7 +30,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
+import android.support.v7.widget.Toolbar;
 
 import java.text.DateFormat;
 import java.util.List;
@@ -68,6 +71,22 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
      * shown on tablets.
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
+
+    private class PhotoBackupSettingsMenuListener implements Toolbar.OnMenuItemClickListener
+    {
+        PhotoBackupSettingsActivity mActivity;
+
+        public PhotoBackupSettingsMenuListener( PhotoBackupSettingsActivity pActivity )
+        {
+            mActivity= pActivity;
+        }
+
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            mActivity.showAbout();
+            return true;
+        }
+    };
 
     @Override
     @TargetApi(Build.VERSION_CODES.KITKAT)
@@ -174,27 +193,30 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
                 .unregisterOnSharedPreferenceChangeListener(m_prefsListener);
     }
 
+    Toolbar mToolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
 
+        ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+        LinearLayout content = (LinearLayout) root.getChildAt(0);
+        LinearLayout toolbarContainer = (LinearLayout) View.inflate(this, R.layout.layout_settings, null);
+
+        root.removeAllViews();
+        toolbarContainer.addView(content);
+        root.addView(toolbarContainer);
+
+        mToolbar = (Toolbar) toolbarContainer.findViewById(R.id.toolbar);
+        mToolbar.setLogo( R.drawable.ic_launcher );
+        mToolbar.setTitle( R.string.app_name );
+        mToolbar.inflateMenu(R.menu.menu_settings);
+        mToolbar.setOnMenuItemClickListener( new PhotoBackupSettingsMenuListener( this ) );
+
         m_prefsListener = new PhotoBackupPreferenceChanged(this);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_settings, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        showAbout();
-        return true;
-    }
-
-    protected void showAbout() {
+    public void showAbout() {
         View messageView = getLayoutInflater().inflate(R.layout.about, null, false);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -239,11 +261,16 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         // In the simplified UI, fragments are not used at all and we instead
         // use the older PreferenceActivity APIs.
 
-        // Add 'general' preferences.
+        addPreferencesFromResource(R.xml.pref_container);
+
+        // Add 'general' preferences, and a corresponding header.
+        PreferenceCategory fakeHeader = new PreferenceCategory(this);
+        fakeHeader.setTitle(R.string.pref_header_general);
+        getPreferenceScreen().addPreference(fakeHeader);
         addPreferencesFromResource(R.xml.pref_general);
 
         // Add 'security' preferences, and a corresponding header.
-        PreferenceCategory fakeHeader = new PreferenceCategory(this);
+        fakeHeader = new PreferenceCategory(this);
         fakeHeader.setTitle(R.string.pref_header_security);
         getPreferenceScreen().addPreference(fakeHeader);
         addPreferencesFromResource(R.xml.pref_security);

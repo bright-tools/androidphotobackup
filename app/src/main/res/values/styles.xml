@@ -2,7 +2,21 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
+
+        <item name="android:textColorPrimary">@color/colourWhite</item>
+        <!-- android:textColorSecondary is the color of the menu
+               overflow icon (three vertical dots) -->
+        <item name="android:textColorSecondary">@color/colourWhite</item>
+
+        <!-- colorPrimary is used for the default action bar background -->
+        <item name="colorPrimary">@color/colourBlue500</item>
+
+        <!-- colorPrimaryDark is used for the status bar -->
+        <item name="colorPrimaryDark">@color/colourBlue900</item>
+
+        <!-- colorAccent is used as the default value for colorControlActivated
+             which is used to tint widgets -->
+        <item name="colorAccent">@color/colourBlue100</item>
     </style>
 
 </resources>
