@@ -196,7 +196,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     Toolbar mToolbar;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
@@ -208,10 +208,17 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         root.addView(toolbarContainer);
 
         mToolbar = (Toolbar) toolbarContainer.findViewById(R.id.toolbar);
-        mToolbar.setLogo( R.drawable.ic_launcher );
-        mToolbar.setTitle( R.string.app_name );
+        mToolbar.setLogo(R.drawable.ic_launcher);
+        mToolbar.setTitle(R.string.app_name);
         mToolbar.inflateMenu(R.menu.menu_settings);
-        mToolbar.setOnMenuItemClickListener( new PhotoBackupSettingsMenuListener( this ) );
+        mToolbar.setOnMenuItemClickListener(new PhotoBackupSettingsMenuListener(this));
+
+        // For some reason, even though the text color is in the theme, AppCompat doesn't seem
+        // to pick it up
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+        {
+            mToolbar.setTitleTextColor(getResources().getColor(android.R.color.white));
+        }
 
         m_prefsListener = new PhotoBackupPreferenceChanged(this);
     }
@@ -453,7 +460,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
     private void updateAlarm() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences( this );
-        boolean alarmEnabled = sharedPreferences.getBoolean("enable_daily_backup", false );
+        boolean alarmEnabled = sharedPreferences.getBoolean("enable_daily_backup", false);
 
         if( alarmEnabled )
         {
@@ -461,7 +468,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         }
         else
         {
-            m_alarm.cancelAlarm( this );
+            m_alarm.cancelAlarm(this);
         }
     }
 
