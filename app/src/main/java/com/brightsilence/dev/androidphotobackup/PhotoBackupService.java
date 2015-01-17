@@ -34,22 +34,45 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.FileInputStream;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /** Implements an Android Service which actually does the work of backing up the media files
     based on the setting entered by the user.
+
+    The service works by scanning all the media stores on the local device and checking for
+    corresponding files on the cloud storage service.  Lists of directory contents are cached
+    ( @see mExistingFiles ) in order to reduce (as compared to checking for the existence of
+    each file individually) the number of cloud API accesses.  A list of files which need to be
+    backed up is built ( @see mFilesToUpload ).  Once the comparison is complete, mFilesToUpload
+    is iterated and the files specified are backed up.
  */
 public class PhotoBackupService extends IntentService {
 
     public static final String TAG = "PhotoBackup::PhotoBackupService";
+    public static final String BACKUP_FN_EXT = ".zip";
     public static final int m_notificationId = 111;
 
     private DropBoxWrapper            mDropBoxWrapper = null;
 
-    /** Map of all of the directories that have been checked for existence (or created) */
-    private Set<String> mExistingDirs;
+    /** Map of all of the directories that have been checked for existence (or created) and the files within them
+     *  Map key is the (cloud storage) directory name
+     *  Map value is a set containing the (unqualified) filenames within the directory */
+    private Map<String, Set<String>> mExistingFiles;
 
+    /** Map of all of the files that need to be uploaded based on a comparison of the files on the
+     *   local device and those on the cloud storage
+     *  Map key is the qualified local filename
+     *  Map value is the directory qualified target name on the cloud storage
+     */
+    private Map<String, String> mFilesToUpload;
+
+    /** Top-level directory on the cloud storage service for backed up files.  Actual files
+     *   will likely be in sub-directories under this, corresponding to the storage structure
+     *   on the local device.
+     */
     private String mTargetDir;
 
     private SharedPreferences mSharedPreferences;
@@ -79,24 +102,38 @@ public class PhotoBackupService extends IntentService {
 
         do {
             String bucketName = cursor.getString(bucketDisplayNameColIdx);
+            String bucketTargetDir = mTargetDir + "/" + bucketName;
 
             /* Check to see if the directory has already been checked & if not, attempt to create it. */
-            if( mExistingDirs.contains( bucketName ) ||
-                ( mDropBoxWrapper.createDir( mTargetDir + "/" + bucketName ) &&
-                  mExistingDirs.add( bucketName ) )) {
+            if (!mExistingFiles.containsKey( bucketTargetDir ))
+            {
+                Log.d(TAG, "Not yet checked directory "+bucketTargetDir);
+                mDropBoxWrapper.createDir( bucketTargetDir );
+
+                // If directory creation failed, then getFilesInDir will yield a NULL set
+
+                Set<String> fileSet = mDropBoxWrapper.getFilesInDir(bucketTargetDir,BACKUP_FN_EXT);
+                if( fileSet != null ) {
+                    mExistingFiles.put(bucketTargetDir, fileSet);
+                }
+            }
+            else
+            {
+                Log.d(TAG, "Already checked directory "+bucketTargetDir);
+            }
+
+            if (!mExistingFiles.containsKey(bucketName)) {
 
                 String mediaFileName = cursor.getString(displayNameColIdx);
                 String mediaModified = cursor.getString(dateModColIdx);
 
-                String targetMediaFileName = mediaFileName + "." + mediaModified + ".zip";
+                String targetMediaFileName = mediaFileName + "." + mediaModified + BACKUP_FN_EXT;
 
                 String fileSrc = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
 
-                String targetPathAndName = mTargetDir + "/" + bucketName + "/" + targetMediaFileName;
-
                 Log.d(TAG, "File Source: " + fileSrc);
 
-                handleIndividualFile(fileSrc, targetPathAndName);
+                handleIndividualFile(fileSrc, bucketTargetDir, targetMediaFileName);
             }
             else
             {
@@ -107,22 +144,24 @@ public class PhotoBackupService extends IntentService {
 
     /** Handles the backing up of a particular file
      *  @param fileSrc           The path to the local file on the Android device
-     *  @param targetPathAndName The fully qualified destination path
+     *  @param targetPath        The target directory name
+     *  @param targetName        The target file name
      */
-    private void handleIndividualFile(String fileSrc, String targetPathAndName) {
-        if( !mDropBoxWrapper.fileExists( targetPathAndName )) {
-            Log.d(TAG, "File doesn't already exist");
-            try {
-                ZipInputStream zipStream = new ZipInputStream(new FileInputStream(fileSrc),
-                        fileSrc,
-                        mSharedPreferences.getString("password_text", ""),
-                        mSharedPreferences.getString("zip_encryption_type", ""));
-                mDropBoxWrapper.upload(targetPathAndName, zipStream);
-            } catch (Exception e) {
-                e.printStackTrace();
+    private void handleIndividualFile(String fileSrc, String targetPath, String targetName) {
+        Set<String> existingFiles = mExistingFiles.get(targetPath);
+
+        if( existingFiles != null ) {
+            if (!existingFiles.contains(targetName)) {
+
+                Log.d(TAG, "File doesn't already exist - adding to upload queue");
+                mFilesToUpload.put(fileSrc, targetPath + "/" + targetName );
+
+            } else {
+                Log.d(TAG, "File exists");
             }
-        } else {
-            Log.d(TAG,"File exists");
+        } else
+        {
+            Log.d(TAG, "File list null for "+targetPath);
         }
     }
 
@@ -131,6 +170,9 @@ public class PhotoBackupService extends IntentService {
     private void backupContent()
     {
         ContentResolver contentResolver = getContentResolver();
+        mExistingFiles = new HashMap<String, Set<String>>();
+        mFilesToUpload = new HashMap<String, String>();
+
         for (int i = 0; i < 2; i++) {
             Uri src;
             if (i == 0) {
@@ -143,13 +185,31 @@ public class PhotoBackupService extends IntentService {
             Cursor cursor = contentResolver.query(src, null, null, null, null);
 
             if (cursor.moveToFirst()) {
-                mExistingDirs = new HashSet<String>();
-                handleFiles( cursor );
+                handleFiles(cursor);
             }
 
             Log.d(TAG,"Finished storage examination");
 
             cursor.close();
+        }
+        uploadFiles();
+    }
+
+    void uploadFiles()
+    {
+        for( Map.Entry<String, String> entry : mFilesToUpload.entrySet() ) {
+            try {
+                Log.d(TAG, "Uploading "+entry.getKey()+" to "+entry.getValue());
+
+                ZipInputStream zipStream = new ZipInputStream(new FileInputStream(entry.getKey()),
+                        entry.getKey(),
+                        mSharedPreferences.getString("password_text", ""),
+                        mSharedPreferences.getString("zip_encryption_type", ""));
+                mDropBoxWrapper.upload(entry.getValue(), zipStream);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -176,6 +236,10 @@ public class PhotoBackupService extends IntentService {
 
         doNotification(resultString);
         updateLastBackupTime();
+
+        /* Don't need these any longer - memory can be released */
+        mFilesToUpload = null;
+        mExistingFiles = null;
     }
 
     private String startBackup()

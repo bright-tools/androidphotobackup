@@ -30,6 +30,8 @@ import com.dropbox.client2.session.AppKeyPair;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 /** This class wraps & abstracts the DropBox API into a few high-level functions which are
     used by Android Photo Backup
@@ -85,6 +87,31 @@ public class DropBoxWrapper {
         AndroidAuthSession session = new AndroidAuthSession(appKeyPair);
         loadAuth(session);
         return session;
+    }
+
+    public Set<String> getFilesInDir(String dirName, String query)
+    {
+        Set<String> retVal = null;
+
+        if( isConnected() ) {
+            try {
+                Log.d(TAG, "Getting files in: " + dirName);
+
+                // TODO: Can this actually return 15k objects?  What if there are actually more?
+                java.util.List<DropboxAPI.Entry> entries = mDBApi.search("/" + dirName, query, 15000, false);
+
+                // Move list of files into hashset
+                retVal = new HashSet<String>();
+                for( DropboxAPI.Entry entry : entries )
+                {
+                    retVal.add( entry.fileName() );
+                }
+            } catch( DropboxException e )
+            {
+                e.printStackTrace();
+            }
+        }
+        return retVal;
     }
 
     public boolean fileExists(String fileName)
