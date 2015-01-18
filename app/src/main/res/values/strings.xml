@@ -58,5 +58,17 @@ You may add Your own copyright statement to Your modifications and may provide a
     <string name="change_password_warning">Changing your password may result in uploaded backups having a mixture of different passwords</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="no_password_set">No password set</string>
+    <string name="dropbox_not_enabled">Dropbox not enabled</string>
+    <string name="dropbox_not_connected">Dropbox not connected</string>
+    <string name="no_internet_connection">No internet connection</string>
+    <string name="backup_completed">Backup completed</string>
+    <string name="top_level_dir_create_failed">Couldn\'t create top-level directory</string>
+    <string name="dropbox_not_connected_no_backups">"Dropbox not enabled &amp; connected, backups disabled"</string>
+    <string name="no_password_set_no_backups">Zip password cannot be empty, backups disabled</string>
+    <string name="new_password_effect">New encryption setting will not effect files already uploaded</string>
+    <string name="last_run">Last Run</string>
+    <string name="never">Never</string>
+    <string name="about">About</string>
 
 </resources>

@@ -21,6 +21,8 @@ package com.brightsilence.dev.androidphotobackup;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
@@ -80,6 +82,15 @@ public class PhotoBackupService extends IntentService {
     public PhotoBackupService()
     {
         super("PhotoBackupService");
+    }
+
+    /** Check to see if there's network connectivity
+     *   Thanks to: http://stackoverflow.com/questions/1560788/how-to-check-internet-access-on-android-inetaddress-never-timeouts#answer-4009133 */
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     /** Update the stored time at which a backup was last performed. */
@@ -222,16 +233,23 @@ public class PhotoBackupService extends IntentService {
 
         if( mSharedPreferences.getString( "password_text", "").length() == 0 ) {
 
-            resultString = "No password set";
+            resultString = getResources().getString(R.string.no_password_set);
 
-        } else if( mSharedPreferences.getBoolean("enable_dropbox_checkbox", false ) &&
-                   mSharedPreferences.getBoolean("connection_to_dropbox", false ) ) {
+        } else if( !mSharedPreferences.getBoolean("enable_dropbox_checkbox", false ) ) {
 
-            resultString = startBackup();
+            resultString = getResources().getString(R.string.dropbox_not_enabled);
+        }
+        else if( !mSharedPreferences.getBoolean("connection_to_dropbox", false ) ) {
+
+            resultString = getResources().getString(R.string.dropbox_not_connected);
+        }
+        else if ( !isOnline() )
+        {
+            resultString = getResources().getString(R.string.no_internet_connection);
         }
         else
         {
-            resultString = "Dropbox not enabled";
+            resultString = startBackup();
         }
 
         doNotification(resultString);
@@ -256,17 +274,18 @@ public class PhotoBackupService extends IntentService {
             {
                 backupContent();
                 // TODO: Complete, but maybe with errors
-                resultString = "Backup complete";
+                resultString = getResources().getString(R.string.backup_completed);
             } else
             {
                 Log.d(TAG,"Top-level directory creation failed");
-                resultString = "Couldn't create container directory";
+                resultString = getResources().getString(R.string.top_level_dir_create_failed);
+
             }
         }
         else
         {
             Log.d(TAG,"DropBox not connected");
-            resultString = "Dropbox not connected";
+            resultString = getResources().getString(R.string.dropbox_not_connected);
         }
         return resultString;
     }

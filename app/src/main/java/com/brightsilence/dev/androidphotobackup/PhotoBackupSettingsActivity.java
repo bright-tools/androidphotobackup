@@ -229,7 +229,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.ic_launcher);
         builder.setCancelable(true);
-        builder.setTitle("About "+getResources().getString(R.string.app_name));
+        builder.setTitle(getResources().getString(R.string.about)+" "+getResources().getString(R.string.app_name));
         builder.setView(messageView);
         builder.create();
         builder.show();
@@ -630,12 +630,12 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
             Long lastBackupTime = sharedPreferences.getLong("last_backup_time", 0);
 
-            String lastBackupString = "Last Run: ";
+            String lastBackupString = getResources().getString(R.string.last_run)+": ";
 
             if (lastBackupTime > 0) {
                 lastBackupString += DateFormat.getDateTimeInstance().format(lastBackupTime);
             } else {
-                lastBackupString += "Never";
+                lastBackupString += getResources().getString(R.string.never);
             }
 
             dailyBackupPref.setSummary(lastBackupString);
@@ -695,7 +695,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
     private void disableBackupsDestUnconfigured()
     {
-        CharSequence text = "Dropbox not enabled & connected, backups disabled";
+        CharSequence text = getResources().getString(R.string.dropbox_not_connected_no_backups);
 
         Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
         toast.show();
@@ -705,7 +705,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
     private void disableBackupsPwIsEmpty()
     {
-        CharSequence text = "Zip password cannot be empty, backups disabled";
+        CharSequence text = getResources().getString(R.string.no_password_set_no_backups);
 
         Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
         toast.show();
@@ -715,7 +715,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
     private void warnEncryptionChanged()
     {
-        CharSequence text = "New encryption setting will not effect files already uploaded";
+        CharSequence text = getResources().getString(R.string.new_password_effect);
 
         Toast toast = Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG);
         toast.show();
