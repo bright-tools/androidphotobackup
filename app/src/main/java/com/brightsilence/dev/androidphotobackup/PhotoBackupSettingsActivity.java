@@ -7,6 +7,7 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -223,13 +224,37 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         m_prefsListener = new PhotoBackupPreferenceChanged(this);
     }
 
+    public void showDisclaimer() {
+        View messageView = getLayoutInflater().inflate(R.layout.disclaimer, null, false);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.ic_launcher);
+        builder.setCancelable(false);
+        builder.setPositiveButton(R.string.accept, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                SharedPreferences.Editor prefEd = PreferenceManager.getDefaultSharedPreferences(PhotoBackupSettingsActivity.this).edit();
+                prefEd.putInt("disclaimer_accepted_version", BuildConfig.VERSION_CODE);
+                prefEd.apply();
+            }
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                PhotoBackupSettingsActivity.this.finish();
+            }
+        });
+        builder.setTitle(getResources().getString(R.string.important_information));
+        builder.setView(messageView);
+        builder.create();
+        builder.show();
+    }
+
     public void showAbout() {
         View messageView = getLayoutInflater().inflate(R.layout.about, null, false);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.ic_launcher);
         builder.setCancelable(true);
-        builder.setTitle(getResources().getString(R.string.about)+" "+getResources().getString(R.string.app_name));
+        builder.setTitle(getResources().getString(R.string.about) + " " + getResources().getString(R.string.app_name));
         builder.setView(messageView);
         builder.create();
         builder.show();
@@ -251,6 +276,11 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
         m_lastPassword = sharedPreferences.getString("password_text","");
         setLastBackupTime();
+
+        if( sharedPreferences.getInt("disclaimer_accepted_version", 0 ) < 1 )
+        {
+            showDisclaimer();
+        }
 
         updateAlarm();
     }

@@ -56,6 +56,7 @@ You may add Your own copyright statement to Your modifications and may provide a
 </string>
 
     <string name="change_password_warning">Changing your password may result in uploaded backups having a mixture of different passwords</string>
+    <string name="accept">I Accept</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="no_password_set">No password set</string>
@@ -69,6 +70,12 @@ You may add Your own copyright statement to Your modifications and may provide a
     <string name="new_password_effect">New encryption setting will not effect files already uploaded</string>
     <string name="last_run">Last Run</string>
     <string name="never">Never</string>
+    <string name="important_information">Important Information</string>
     <string name="about">About</string>
+    <string name="please_read">Please read the following before using Android Photo Backup:</string>
+    <string name="disclaimer">This application may use a significant amount of network bandwidth in order to back up your files.  If you pay for your data, please be aware of this.\n
+\nThe password used to encrypt your backups is stored on your device, but nowhere else.  If you lose is, and cannot remember the password, you will not be able to decrypt your backups.\n
+\nWhile the [Licensor] takes every effort to ensure the integrity of the backup process, please be aware that it is likely not infallible.  Please regularly check that your backups are occurring and the integrity of the files stored on the cloud storage service.\n
+\nIn no event shall [Licensor] be liable to you or any party related to you for any indirect, incidental, consequential, special, exemplary, or punitive damages or lost profits, even if [Licensor] has been advised of the possibility of such damages. In any event, [licensor\'s] total aggregate liability to you for all damages of every kind and type (regardless of whether based in contract or tort) shall not exceed the purchase price of the product.</string>
 
 </resources>
