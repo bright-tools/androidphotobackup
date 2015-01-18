@@ -81,5 +81,6 @@ You may add Your own copyright statement to Your modifications and may provide a
     <string name="action_settings">Settings</string>
     <string name="action_previous">Previous</string>
     <string name="action_next">Next</string>
+    <string name="none">None</string>
 
 </resources>

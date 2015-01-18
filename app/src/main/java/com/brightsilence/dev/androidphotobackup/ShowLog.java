@@ -145,8 +145,9 @@ public class ShowLog extends ActionBarActivity {
             View rootView = inflater.inflate(R.layout.fragment_show_success_log, container, false);
 
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(container.getContext());
-            ((TextView) rootView.findViewById(R.id.backupResult)).setText(sharedPreferences.getString("last_backup_result",""));
-            ((TextView) rootView.findViewById(R.id.backupFiles)).setText(sharedPreferences.getString("last_backup_files_uploaded",""));
+            String noneString = getResources().getString(R.string.none);
+            ((TextView) rootView.findViewById(R.id.backupResult)).setText(sharedPreferences.getString("last_backup_result",noneString));
+            ((TextView) rootView.findViewById(R.id.backupFiles)).setText(sharedPreferences.getString("last_backup_files_uploaded",noneString));
 
             return rootView;
         }
@@ -171,7 +172,8 @@ public class ShowLog extends ActionBarActivity {
             View rootView = inflater.inflate(R.layout.fragment_show_fail_log, container, false);
 
             SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(container.getContext());
-            ((TextView) rootView.findViewById(R.id.failedFiles)).setText(sharedPreferences.getString("last_backup_files_failed",""));
+            String noneString = getResources().getString(R.string.none);
+            ((TextView) rootView.findViewById(R.id.failedFiles)).setText(sharedPreferences.getString("last_backup_files_failed",noneString));
 
             return rootView;
         }

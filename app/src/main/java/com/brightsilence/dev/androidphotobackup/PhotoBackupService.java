@@ -278,7 +278,7 @@ public class PhotoBackupService extends IntentService {
         mFilesUploaded = null;
     }
 
-    private static String concatFileList(Iterable<String> strings) {
+    private String concatFileList(Iterable<String> strings) {
         StringBuilder strBuilder = new StringBuilder();
         if( strings != null ) {
             String sep = "";
@@ -289,7 +289,7 @@ public class PhotoBackupService extends IntentService {
         }
         if( strBuilder.length() == 0 )
         {
-            strBuilder.append("None");
+            strBuilder.append(getResources().getString(R.string.none));
         }
         return strBuilder.toString();
     }
