@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
@@ -322,6 +323,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
         // their values. When their values change, their summaries are updated
         // to reflect the new value, per the Android Design guidelines.
         bindPasswordPreference(findPreference("show_password_checkbox"));
+        findPreference("show_last_log").setOnPreferenceClickListener(new PhotoBackupPreferenceClick());
 
         bindPreferenceSummaryToLongValue(findPreference("backup_trigger_time"));
     }
@@ -520,6 +522,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             // updated to reflect the new value, per the Android Design
             // guidelines.
             bindPreferenceSummaryToLongValue(findPreference("backup_trigger_time"));
+            findPreference("show_last_log").setOnPreferenceClickListener(new PhotoBackupPreferenceClick());
         }
     }
 
@@ -566,6 +569,19 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
             // guidelines.
             //bindPreferenceSummaryToValue(findPreference("example_text"));
             //bindPreferenceSummaryToValue(findPreference("example_list"));
+        }
+    }
+
+    public static class PhotoBackupPreferenceClick implements Preference.OnPreferenceClickListener{
+        @Override
+        public boolean onPreferenceClick(Preference arg0) {
+            if( arg0.getKey().equals( "show_last_log" ))
+            {
+                Log.d(TAG,"Show last log received");
+                Intent intent = new Intent(arg0.getContext(), ShowLog.class);
+                arg0.getContext().startActivity(intent);
+            }
+            return true;
         }
     }
 

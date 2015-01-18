@@ -1,4 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">Android Photo Backup</string>
     <string name="app_copyright">(c) 2014 John Bailey</string>
     <string name="app_zip4j_attribution">Uses Zip4j by Srikanth Reddy Lingala\nhttp://www.lingala.net/zip4j</string>
@@ -52,9 +54,7 @@ You may add Your own copyright statement to Your modifications and may provide a
 \n
 8. Limitation of Liability. In no event and under no legal theory, whether in tort (including negligence), contract, or otherwise, unless required by applicable law (such as deliberate and grossly negligent acts) or agreed to in writing, shall any Contributor be liable to You for damages, including any direct, indirect, special, incidental, or consequential damages of any character arising as a result of this License or out of the use or inability to use the Work (including but not limited to damages for loss of goodwill, work stoppage, computer failure or malfunction, or any and all other commercial damages or losses), even if such Contributor has been advised of the possibility of such damages.\n
 \n
-9. Accepting Warranty or Additional Liability. While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for, acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License. However, in accepting such obligations, You may act only on Your own behalf and on Your sole responsibility, not on behalf of any other Contributor, and only if You agree to indemnify, defend, and hold each Contributor harmless for any liability incurred by, or claims asserted against, such Contributor by reason of your accepting any such warranty or additional liability.
-</string>
-
+9. Accepting Warranty or Additional Liability. While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for, acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License. However, in accepting such obligations, You may act only on Your own behalf and on Your sole responsibility, not on behalf of any other Contributor, and only if You agree to indemnify, defend, and hold each Contributor harmless for any liability incurred by, or claims asserted against, such Contributor by reason of your accepting any such warranty or additional liability.</string>
     <string name="change_password_warning">Changing your password may result in uploaded backups having a mixture of different passwords</string>
     <string name="accept">I Accept</string>
     <string name="ok">OK</string>
@@ -77,5 +77,9 @@ You may add Your own copyright statement to Your modifications and may provide a
 \nThe password used to encrypt your backups is stored on your device, but nowhere else.  If you lose is, and cannot remember the password, you will not be able to decrypt your backups.\n
 \nWhile the [Licensor] takes every effort to ensure the integrity of the backup process, please be aware that it is likely not infallible.  Please regularly check that your backups are occurring and the integrity of the files stored on the cloud storage service.\n
 \nIn no event shall [Licensor] be liable to you or any party related to you for any indirect, incidental, consequential, special, exemplary, or punitive damages or lost profits, even if [Licensor] has been advised of the possibility of such damages. In any event, [licensor\'s] total aggregate liability to you for all damages of every kind and type (regardless of whether based in contract or tort) shall not exceed the purchase price of the product.</string>
+    <string name="title_activity_show_log">Backup Log</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_previous">Previous</string>
+    <string name="action_next">Next</string>
 
 </resources>

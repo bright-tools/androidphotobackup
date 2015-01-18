@@ -1,0 +1,51 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.brightsilence.dev.androidphotobackup.ShowLog$SuccessFragment"
+    android:background="@color/colourBlue50">
+    <!-- TODO: Should use style in background attribute above -->
+
+    <TextView android:id="@+id/backupResultLabel" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Result of last backup:" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/backupResult"
+        android:layout_below="@+id/backupResultLabel"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="15px" />
+
+
+    <TextView android:id="@+id/backupFilesLabel" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:text="Files Copied:"
+        android:layout_below="@+id/backupResult"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        />
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_below="@+id/backupFilesLabel"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:scrollbars="vertical"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="15px"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/backupFiles" />
+
+    </ScrollView>
+</RelativeLayout>

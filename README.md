@@ -41,7 +41,3 @@ TODO List
 JavaDoc
 "How to" guide
 "FAQ"
-Add disclaimer
-Add TODO screen
-Hookup back-up log within UI
-New icon

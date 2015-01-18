@@ -224,7 +224,7 @@ public class DropBoxWrapper {
         edit.commit();
     }
 
-    void upload( String fileName, InputStream in ) throws IOException, DropboxException
+    boolean upload( String fileName, InputStream in ) throws IOException, DropboxException
     {
         boolean allOk = true;
 
@@ -249,7 +249,7 @@ public class DropBoxWrapper {
                 }
             }
             if( allOk ) {
-            uploadedFileMetadata = uploader.finish("/"+fileName, null);
+                uploadedFileMetadata = uploader.finish("/"+fileName, null);
                 Log.d(TAG, "Uploaded " + uploadedFileMetadata.fileName() + ", size: " + uploadedFileMetadata.size);
             } else {
                 Log.d(TAG, "Upload of "+fileName+" failed");
@@ -258,6 +258,7 @@ public class DropBoxWrapper {
         } finally {
             in.close();
         }
+        return allOk;
     }
 
     void onResume() {

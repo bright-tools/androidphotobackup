@@ -11,4 +11,9 @@
         android:title="Daily Backup Time"
         />
 
+    <Preference
+        android:key="show_last_log"
+        android:title="Show Last Backup Log"
+        />
+
 </PreferenceScreen>

@@ -38,6 +38,7 @@ import android.util.Log;
 import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,6 +71,10 @@ public class PhotoBackupService extends IntentService {
      *  Map value is the directory qualified target name on the cloud storage
      */
     private Map<String, String> mFilesToUpload;
+
+    private List<String>        mFilesUploaded;
+
+    private List<String>        mFilesFailed;
 
     /** Top-level directory on the cloud storage service for backed up files.  Actual files
      *   will likely be in sub-directories under this, corresponding to the storage structure
@@ -216,7 +221,14 @@ public class PhotoBackupService extends IntentService {
                         entry.getKey(),
                         mSharedPreferences.getString("password_text", ""),
                         mSharedPreferences.getString("zip_encryption_type", ""));
-                mDropBoxWrapper.upload(entry.getValue(), zipStream);
+                if( mDropBoxWrapper.upload(entry.getValue(), zipStream) )
+                {
+                    mFilesUploaded.add(entry.getKey());
+                }
+                else
+                {
+                    mFilesFailed.add(entry.getKey());
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -254,10 +266,43 @@ public class PhotoBackupService extends IntentService {
 
         doNotification(resultString);
         updateLastBackupTime();
+        updateLogs( resultString );
+        cleanUp();
+    }
 
-        /* Don't need these any longer - memory can be released */
+    private void cleanUp() {
+        /* Don't need these any longer - clear the references so that memory can be garbage collected */
         mFilesToUpload = null;
         mExistingFiles = null;
+        mFilesFailed = null;
+        mFilesUploaded = null;
+    }
+
+    private static String concatFileList(Iterable<String> strings) {
+        StringBuilder strBuilder = new StringBuilder();
+        if( strings != null ) {
+            String sep = "";
+            for (String str : strings) {
+                strBuilder.append(sep).append(str);
+                sep = "\n";
+            }
+        }
+        if( strBuilder.length() == 0 )
+        {
+            strBuilder.append("None");
+        }
+        return strBuilder.toString();
+    }
+
+    private void updateLogs( String result )
+    {
+        SharedPreferences.Editor preferenceEditor = mSharedPreferences.edit();
+
+        preferenceEditor.putString("last_backup_result", result);
+        preferenceEditor.putString("last_backup_files_uploaded", concatFileList(mFilesUploaded));
+        preferenceEditor.putString("last_backup_files_failed", concatFileList(mFilesFailed));
+
+        preferenceEditor.apply();
     }
 
     private String startBackup()
@@ -299,7 +344,7 @@ public class PhotoBackupService extends IntentService {
                         .setContentText(notificationText);
 
         // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, PhotoBackupSettingsActivity.class);
+        Intent resultIntent = new Intent(this, ShowLog.class);
 
         // The stack builder object will contain an artificial back stack for the
         // started Activity.
@@ -307,7 +352,7 @@ public class PhotoBackupService extends IntentService {
         // your application to the Home screen.
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
         // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(PhotoBackupSettingsActivity.class);
+        stackBuilder.addParentStack(ShowLog.class);
         // Adds the Intent that starts the Activity to the top of the stack
         stackBuilder.addNextIntent(resultIntent);
         PendingIntent resultPendingIntent =
