@@ -2,6 +2,7 @@ package com.brightsilence.dev.androidphotobackup;
 
 import java.util.Locale;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
@@ -10,6 +11,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -60,13 +62,6 @@ public class ShowLog extends ActionBarActivity {
         });
 
         // TODO: Text in ActionBar not correct color
-    }
-
-    @Override
-    protected void onResume()
-    {
-        super.onResume();
-        PhotoBackupService.clearNotification(getApplicationContext());
     }
 
     @Override

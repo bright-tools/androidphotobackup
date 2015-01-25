@@ -345,7 +345,8 @@ public class PhotoBackupService extends IntentService {
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.ic_launcher)
                         .setContentTitle("Android Photo Backup Complete")
-                        .setContentText(notificationText);
+                        .setContentText(notificationText)
+                        .setAutoCancel(true);
 
         // Creates an explicit intent for an Activity in your app
         Intent resultIntent = new Intent(this, ShowLog.class);
@@ -370,11 +371,5 @@ public class PhotoBackupService extends IntentService {
 
         // mId allows you to update the notification later on.
         mNotificationManager.notify(m_notificationId, mBuilder.build());
-    }
-
-    static void clearNotification(Context context)
-    {
-        NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(m_notificationId);
     }
 }
