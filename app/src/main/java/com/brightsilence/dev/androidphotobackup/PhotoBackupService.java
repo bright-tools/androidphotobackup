@@ -36,6 +36,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -213,6 +214,9 @@ public class PhotoBackupService extends IntentService {
 
     void uploadFiles()
     {
+        mFilesUploaded = new ArrayList<String>();
+        mFilesFailed = new ArrayList<String>();
+
         for( Map.Entry<String, String> entry : mFilesToUpload.entrySet() ) {
             try {
                 Log.d(TAG, "Uploading "+entry.getKey()+" to "+entry.getValue());
@@ -366,5 +370,11 @@ public class PhotoBackupService extends IntentService {
 
         // mId allows you to update the notification later on.
         mNotificationManager.notify(m_notificationId, mBuilder.build());
+    }
+
+    static void clearNotification(Context context)
+    {
+        NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(m_notificationId);
     }
 }

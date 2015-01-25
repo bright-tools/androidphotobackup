@@ -63,6 +63,13 @@ public class ShowLog extends ActionBarActivity {
     }
 
     @Override
+    protected void onResume()
+    {
+        super.onResume();
+        PhotoBackupService.clearNotification(getApplicationContext());
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.activity_screen_slide, menu);
