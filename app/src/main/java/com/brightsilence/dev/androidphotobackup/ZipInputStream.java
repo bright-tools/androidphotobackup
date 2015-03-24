@@ -40,7 +40,7 @@ public class ZipInputStream  extends FilterInputStream {
     private int    byteArraySize;
     private boolean zipOutputStreamFinished;
 
-    public static final String TAG = "PhotoBackup::ZipInputStream";
+    public static final String TAG = "APB::ZipInputStream";
 
 
     private static final int chunkSize = 1024 * 150;

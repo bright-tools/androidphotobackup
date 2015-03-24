@@ -53,7 +53,7 @@ import java.util.List;
  */
 public class PhotoBackupSettingsActivity extends PreferenceActivity {
 
-    public static final String TAG = "PhotoBackup::PhotoBackupSettingsActivity";
+    public static final String TAG = "APB::SettingsActivity";
     public PhotoBackupPreferenceChanged m_prefsListener;
 
     public static final String PREFERENCES_FILE_KEY = "PhotoBackupPrefsFile";
@@ -586,7 +586,7 @@ public class PhotoBackupSettingsActivity extends PreferenceActivity {
     }
 
     public class PhotoBackupPreferenceChanged implements SharedPreferences.OnSharedPreferenceChangeListener {
-        public static final String TAG = "PhotoBackup::PhotoBackupPreferenceChanged";
+        public static final String TAG = "APB::PreferenceChanged";
 
         private PreferenceActivity m_parent;
 

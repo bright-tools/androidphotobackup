@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PhotoBackupAlarmReceiver extends WakefulBroadcastReceiver {
 
-    public static final String TAG = "PhotoBackup::PhotoBackupAlarmReceiver";
+    public static final String TAG = "APB::AlarmReceiver";
 
     // The app's AlarmManager, which provides access to the system alarm services.
     private AlarmManager alarmMgr;

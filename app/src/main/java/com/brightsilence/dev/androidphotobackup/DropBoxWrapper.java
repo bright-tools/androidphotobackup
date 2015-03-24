@@ -55,7 +55,7 @@ public class DropBoxWrapper {
     /** Preference key for the DropBox access secret */
     private static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
 
-    public static final String TAG = "PhotoBackup::DropBoxWrapper";
+    public static final String TAG = "APB::DropBoxWrapper";
 
     /** Number of times to retry uploading a file chunk before giving up */
     public static final int MAX_RETRIES = 3;

@@ -38,7 +38,6 @@ import android.util.Log;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +54,7 @@ import java.util.Set;
  */
 public class PhotoBackupService extends IntentService {
 
-    public static final String TAG = "PhotoBackup::PhotoBackupService";
+    public static final String TAG = "APB::BackupService";
     public static final String BACKUP_FN_EXT = ".zip";
     public static final int m_notificationId = 111;
 
