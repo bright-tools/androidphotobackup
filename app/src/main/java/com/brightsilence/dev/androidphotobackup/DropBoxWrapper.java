@@ -55,6 +55,9 @@ public class DropBoxWrapper {
     /** Preference key for the DropBox access secret */
     private static final String ACCESS_SECRET_NAME = "ACCESS_SECRET";
 
+    /** Maximum number of child file entries that can be returned by the metadata DropBox API method */
+    public final static int MAX_DROPBOX_FILES = 25000;
+
     public static final String TAG = "APB::DropBoxWrapper";
 
     /** Number of times to retry uploading a file chunk before giving up */
@@ -97,12 +100,11 @@ public class DropBoxWrapper {
             try {
                 Log.d(TAG, "Getting files in: " + dirName);
 
-                // TODO: Can this actually return 15k objects?  What if there are actually more?
-                java.util.List<DropboxAPI.Entry> entries = mDBApi.search("/" + dirName, query, 15000, false);
+                DropboxAPI.Entry entries = mDBApi.metadata("/" + dirName, MAX_DROPBOX_FILES, null, true, null);
 
                 // Move list of files into hashset
                 retVal = new HashSet<String>();
-                for( DropboxAPI.Entry entry : entries )
+                for( DropboxAPI.Entry entry : entries.contents )
                 {
                     retVal.add( entry.fileName() );
                 }
